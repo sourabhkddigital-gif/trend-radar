@@ -1,6 +1,7 @@
 import { resolveKeys, advanceJob } from "../lib/jobs.js";
 import { send, guard, cors } from "../lib/http.js";
-export const config = { maxDuration: 60 };
+// The AI step runs inside this function; Fluid compute allows up to 300 s on Hobby (800 s on Pro).
+export const config = { maxDuration: 300 };
 export default async function handler(req, res) {
   if (cors(req, res)) return;
   await guard(res, async () => {
