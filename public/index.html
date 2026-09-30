@@ -280,6 +280,9 @@ const safetyTag = s => tag(s === "safe" ? "brand-safe" : s === "caution" ? "caut
 const SETTINGS_KEY = "tr-settings";
 let settings = {}; try { settings = JSON.parse(localStorage.getItem(SETTINGS_KEY) || "{}"); } catch {}
 function saveSettings(){ try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings)); } catch {} }
+// Invite links: https://site/?k=<access code> — the code is saved once and removed from the address bar.
+try { const u = new URL(location.href); const k = u.searchParams.get("k"); if (k) { settings.code = k.trim(); saveSettings(); u.searchParams.delete("k"); history.replaceState(null, "", u.pathname + (u.search || "") + u.hash); } } catch {}
+function inviteLink(){ const u = new URL(location.origin + "/"); if (settings.code) u.searchParams.set("k", settings.code); return u.toString(); }
 function authHeaders(){ const h = {}; if (settings.apify) h["x-apify-token"] = settings.apify; if (settings.openrouter) h["x-openrouter-key"] = settings.openrouter; if (settings.model) h["x-openrouter-model"] = settings.model; if (settings.code) h["x-access-code"] = settings.code; return h; }
 async function api(path, opts={}) {
   const res = await fetch(path, { ...opts, headers: { "Content-Type":"application/json", ...authHeaders(), ...(opts.headers||{}) } });
@@ -365,12 +368,16 @@ async function loadRecent() {
     box.querySelectorAll("[data-open]").forEach(b => b.addEventListener("click", () => go("/r/"+b.dataset.open)));
   } catch (e) { box.innerHTML = `<div class="empty">${esc(e.message)}</div>`; }
 }
-async function startResearch() {
-  const btn = $("#run"); btn.disabled = true; btn.textContent = "Starting…";
+async function startResearch({ fresh = false } = {}) {
+  const btn = $("#run"); if (btn) { btn.disabled = true; btn.textContent = "Starting…"; }
   try {
-    const { job: j } = await api("/api/research", { method:"POST", body: JSON.stringify({ mode: form.mode, topic: form.topic, region: form.region, windowH: form.windowH, platforms: [...form.plats] }) });
+    const { job: j, reused } = await api("/api/research", { method:"POST", body: JSON.stringify({ mode: form.mode, topic: form.topic, region: form.region, windowH: form.windowH, platforms: [...form.plats], fresh }) });
     job = j; go("/r/"+j.id);
-  } catch (e) { $("#home-note").innerHTML = `<div class="note err">${esc(e.message)}</div>`; btn.disabled = false; btn.textContent = form.mode==="topic"?"Research →":"Scan trends →"; }
+    if (reused) toast(`Showing a research from ${sinceText(j.created_at)} — no credits spent. Use “Run again” for a fresh one.`, 5000);
+  } catch (e) {
+    const note = $("#home-note"); if (note) note.innerHTML = `<div class="note err">${esc(e.message)}</div>`; else toast(e.message);
+    if (btn) { btn.disabled = false; btn.textContent = form.mode==="topic"?"Research →":"Scan trends →"; }
+  }
 }
 
 /* ---------- job ---------- */
@@ -491,7 +498,7 @@ function renderSources() {
 function bindJob() {
   const m = $("#main");
   m.querySelector("#share")?.addEventListener("click", () => copyText(location.origin + "/r/" + job.id, "Link copied"));
-  m.querySelector("#rerun")?.addEventListener("click", () => { form = { mode: job.mode, topic: job.mode==="topic"?job.topic:"", region: job.region, windowH: job.windowH, plats: new Set(job.platforms) }; stopPolling(); job = null; go("/"); });
+  m.querySelector("#rerun")?.addEventListener("click", async (ev) => { form = { mode: job.mode, topic: job.mode==="topic"?job.topic:"", region: job.region, windowH: job.windowH, plats: new Set(job.platforms) }; ev.target.disabled = true; ev.target.textContent = "Starting…"; stopPolling(); await startResearch({ fresh: true }); ev.target.disabled = false; ev.target.textContent = "Run again"; });
   m.querySelector("#retry-brain")?.addEventListener("click", async () => { try { const r = await api("/api/job?id="+job.id+"&retry=brain"); job = r.job; renderJob(); schedulePoll(); } catch(e) { toast(e.message); } });
   m.querySelectorAll("[data-next]").forEach(b => b.addEventListener("click", () => { form = { mode:"topic", topic:b.dataset.next, region:job.region, windowH:job.windowH, plats:new Set(TOPIC_PLATS) }; stopPolling(); job = null; go("/"); setTimeout(startResearch, 50); }));
   m.querySelector("#q")?.addEventListener("input", e => { state.q = e.target.value; clearTimeout(bindJob.t); bindJob.t = setTimeout(() => { const pos = e.target.selectionStart; renderJob(); const q=$("#q"); if(q){q.focus(); try{q.setSelectionRange(pos,pos);}catch{}} }, 150); });
@@ -535,7 +542,8 @@ $("#settings-btn").addEventListener("click", async () => {
   const box = document.createElement("div"); box.className = "modal"; box.innerHTML = `<div class="box" role="dialog" aria-label="Settings">
     <h3>Settings</h3>
     <div class="help">${health?.server_keys ? `This site has shared keys${health.access_code?" protected by an access code":""}. You can still use your own keys below; they stay in this browser only.` : "This site has no shared keys. Add your own Apify token (required) and OpenRouter key (for the AI analysis)."}</div>
-    ${health?.access_code?`<label>Access code<input id="s-code" type="password" value="${esc(settings.code||"")}" placeholder="given by the site owner"></label>`:""}
+    ${health?.access_code?`<label>Access code<input id="s-code" type="password" value="${esc(settings.code||"")}" placeholder="given by the site owner"></label>
+    ${settings.code?`<div class="help" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><span>Share the tool without handing out the code:</span><button class="btn" id="s-invite" type="button">Copy invite link</button></div>`:""}`:""}
     <fieldset><legend>Your own keys (optional)</legend>
       <label>Apify API token<input id="s-apify" type="password" value="${esc(settings.apify||"")}" placeholder="apify_api_…"><span class="help">console.apify.com → Settings → API &amp; Integrations. Research results are saved to your Apify account.</span></label>
       <label>OpenRouter API key<input id="s-or" type="password" value="${esc(settings.openrouter||"")}" placeholder="sk-or-v1-…"><span class="help">openrouter.ai → Keys. Needed for signals, angles and summaries.</span></label>
@@ -544,6 +552,7 @@ $("#settings-btn").addEventListener("click", async () => {
     <div style="display:flex;gap:8px;justify-content:flex-end"><button class="btn" id="s-cancel">Cancel</button><button class="btn primary" id="s-save">Save</button></div></div>`;
   document.body.appendChild(box);
   box.querySelector("#s-cancel").addEventListener("click", () => box.remove());
+  box.querySelector("#s-invite")?.addEventListener("click", () => copyText(inviteLink(), "Invite link copied — anyone who opens it can run research"));
   box.addEventListener("click", e => { if (e.target === box) box.remove(); });
   box.querySelector("#s-save").addEventListener("click", () => { settings = { code: box.querySelector("#s-code")?.value.trim()||"", apify: box.querySelector("#s-apify").value.trim(), openrouter: box.querySelector("#s-or").value.trim(), model: box.querySelector("#s-model").value.trim() }; saveSettings(); box.remove(); toast("Settings saved"); if (!job) renderHome(); });
 });
@@ -551,7 +560,8 @@ $("#settings-btn").addEventListener("click", async () => {
 /* ---------- utils ---------- */
 function copyText(t, msg="Copied") { const done = () => toast(msg); try { navigator.clipboard.writeText(t).then(done).catch(() => fallbackCopy(t)); } catch { fallbackCopy(t); } }
 function fallbackCopy(t) { const ta=document.createElement("textarea"); ta.value=t; ta.style.position="fixed"; ta.style.opacity="0"; document.body.appendChild(ta); ta.select(); try{document.execCommand("copy"); toast("Copied");}catch{toast("Select and copy manually");} ta.remove(); }
-let toastEl; function toast(msg) { toastEl?.remove(); toastEl=document.createElement("div"); toastEl.className="toast"; toastEl.textContent=msg; document.body.appendChild(toastEl); setTimeout(()=>toastEl?.remove(),1800); }
+let toastEl; function toast(msg, ms=1800) { toastEl?.remove(); toastEl=document.createElement("div"); toastEl.className="toast"; toastEl.textContent=msg; document.body.appendChild(toastEl); setTimeout(()=>toastEl?.remove(),ms); }
+function sinceText(iso) { const m = Math.max(1, Math.round((Date.now() - new Date(iso)) / 60000)); return m < 60 ? `${m} min ago` : `${Math.round(m/60)} h ago`; }
 
 route();
 </script>

@@ -22,7 +22,9 @@ Every research run gets a shareable link (`/r/<id>`). Results are stored in your
    | `APIFY_TOKEN` | yes* | Runs the scrapers and stores results |
    | `OPENROUTER_API_KEY` | recommended | Signals, angles, summaries. Without it you get raw results only |
    | `OPENROUTER_MODEL` | no | Default `anthropic/claude-sonnet-4.5`. Any OpenRouter model id |
-   | `ACCESS_CODE` | **set this for any public site** | Visitors must enter it once (⚙ Settings). Without it, anyone can spend your credits |
+   | `ACCESS_CODE` | **set this for any public site** | Needed to *start* a research (viewing results is always open). Share `https://your-site/?k=<code>` as an invite link — the page saves the code silently, so people just type a topic |
+   | `DAILY_LIMIT` | no | Max researches per rolling 24 h on the shared keys (default 40; 0 = unlimited) |
+   | `REUSE_HOURS` | no | Same topic/region/window asked again within N hours reuses the existing research instead of paying twice (default 2) |
    | `KV_STORE_NAME` | no | Apify key-value store name for saved results (default `trend-radar-jobs`) |
    | `APP_NAME` | no | Display name |
 
@@ -77,7 +79,8 @@ APIFY_TOKEN=… OPENROUTER_API_KEY=… npm run dev   # real run
 - TikTok's Creative Center has no India data and a 7-day minimum window; Instagram's trending feed is global.
 - X hides post volumes for trends. YouTube's Trending page was retired, so trending mode uses the official mostPopular chart.
 - Non-English results are filtered out in this version.
-- Functions time out at 60 s per call; the page keeps polling, so long actor runs (up to 7 min) are fine.
+- The AI analysis runs inside `api/job` with a 240 s budget (needs Vercel **Fluid compute**, on by default for new projects; `maxDuration` 300). Actor runs up to 7 min are fine because the page keeps polling.
+- Live instance: https://trend-radar-pi-dusky.vercel.app (access code required).
 
 ## Roadmap
 
