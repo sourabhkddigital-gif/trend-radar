@@ -1,0 +1,12 @@
+{
+  "name": "trend-radar",
+  "version": "3.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Topic-driven trend research across Google, YouTube, Reddit, X, TikTok, Instagram and Google News, powered by Apify + OpenRouter.",
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "dev": "node dev/server.js",
+    "test": "node --test test/*.test.js"
+  }
+}

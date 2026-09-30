@@ -1,0 +1,559 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Trend Radar</title>
+<meta name="description" content="Research any topic and see what's trending about it right now across Google, YouTube, Reddit, X, TikTok, Instagram and Google News, with content angles for marketers.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 36 36'%3E%3Ccircle cx='18' cy='18' r='16' fill='none' stroke='%23127A67' stroke-width='2'/%3E%3Cpath d='M18 18 L18 3 A15 15 0 0 1 31 11 Z' fill='%23127A67' opacity='.4'/%3E%3Ccircle cx='18' cy='18' r='3' fill='%23127A67'/%3E%3Ccircle cx='25' cy='9.5' r='2.5' fill='%23E14A22'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Manrope:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+:root{
+  --bg:#F3F6F2; --surface:#FFFFFF; --surface-2:#EAF0E9; --ink:#151A17; --ink-2:#48524C; --muted:#7A857D; --line:#D9E1D9; --line-2:#C4CEC5;
+  --accent:#127A67; --accent-ink:#0B5C4D; --accent-soft:#DCF0EA; --flare:#E14A22; --flare-soft:#FCE5DD;
+  --good:#0ca30c; --warn:#b97a00; --warn-bg:#FFF4D6; --crit:#d03b3b; --crit-bg:#FDE4E4; --good-bg:#E3F5E3;
+  --viz-1:#2a78d6; --shadow:0 1px 2px rgba(21,26,23,.05),0 8px 24px -12px rgba(21,26,23,.18);
+  --f-display:"Instrument Serif",Georgia,"Times New Roman",serif; --f-ui:"Manrope",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif; --f-mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0E1311; --surface:#161C19; --surface-2:#1C2420; --ink:#E7ECE8; --ink-2:#B4BFB7; --muted:#88948B; --line:#26302A; --line-2:#344038;
+  --accent:#3BD3AD; --accent-ink:#8FE8D0; --accent-soft:#12332C; --flare:#FF7A57; --flare-soft:#3B1E15;
+  --good:#4ADE80; --warn:#fab219; --warn-bg:#2E2410; --crit:#F87171; --crit-bg:#3A1A1A; --good-bg:#12301A; --viz-1:#3987e5;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px -12px rgba(0,0,0,.6); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0E1311; --surface:#161C19; --surface-2:#1C2420; --ink:#E7ECE8; --ink-2:#B4BFB7; --muted:#88948B; --line:#26302A; --line-2:#344038;
+  --accent:#3BD3AD; --accent-ink:#8FE8D0; --accent-soft:#12332C; --flare:#FF7A57; --flare-soft:#3B1E15;
+  --good:#4ADE80; --warn:#fab219; --warn-bg:#2E2410; --crit:#F87171; --crit-bg:#3A1A1A; --good-bg:#12301A; --viz-1:#3987e5;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px -12px rgba(0,0,0,.6); color-scheme:dark}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font:14px/1.5 var(--f-ui);-webkit-font-smoothing:antialiased;min-height:100vh}
+a{color:inherit} button{font:inherit;color:inherit} h1,h2,h3,h4{margin:0;text-wrap:balance}
+.wrap{max-width:1440px;margin:0 auto;padding-inline:20px}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:6px}
+[hidden]{display:none!important}
+
+/* masthead */
+.top{position:sticky;top:0;z-index:20;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+.top .wrap{display:flex;flex-wrap:wrap;align-items:center;gap:10px 18px;padding-block:11px}
+.brand{display:flex;align-items:center;gap:11px;text-decoration:none;min-width:0}
+.brand .mark{width:34px;height:34px;flex:none}
+.brand h1{font:400 28px/1 var(--f-display);letter-spacing:-.01em}
+.brand h1 em{font-style:italic;color:var(--accent)}
+.status{display:flex;flex-wrap:wrap;gap:6px 14px;font:500 12px/1.4 var(--f-mono);color:var(--muted);min-width:0}
+.status b{color:var(--ink);font-weight:600}
+.status .dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--accent);margin-right:6px;vertical-align:middle;box-shadow:0 0 0 3px var(--accent-soft)}
+.status .dot.run{background:var(--flare);box-shadow:0 0 0 3px var(--flare-soft);animation:pulse 1.2s ease-in-out infinite}
+@keyframes pulse{50%{opacity:.4}}
+nav.tabs{margin-left:auto;display:flex;gap:2px;background:var(--surface-2);padding:3px;border-radius:10px;max-width:100%;overflow-x:auto;scrollbar-width:none}
+nav.tabs::-webkit-scrollbar{display:none}
+nav.tabs a{padding:7px 12px;border-radius:8px;text-decoration:none;font-weight:600;color:var(--ink-2);white-space:nowrap;cursor:pointer}
+nav.tabs a[aria-current="page"]{background:var(--surface);color:var(--ink);box-shadow:var(--shadow)}
+nav.tabs a .n{font:500 11px var(--f-mono);color:var(--muted);margin-left:5px}
+.topbtns{display:flex;gap:6px;align-items:center}
+@media (max-width:760px){nav.tabs{margin-left:0;flex:1 1 100%}}
+
+.btn{border:1px solid var(--line-2);background:var(--surface);border-radius:9px;padding:8px 13px;font-weight:700;font-size:13px;cursor:pointer;color:var(--ink);display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+:root[data-theme="dark"] .btn.primary{color:#0E1311}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .btn.primary{color:#0E1311}}
+.btn.ghost{border-color:transparent;background:none;color:var(--accent-ink)}
+.btn.icon{padding:8px;width:36px;justify-content:center}
+.btn:disabled{opacity:.55;cursor:not-allowed}
+
+/* home */
+.hero{padding:56px 0 24px;max-width:840px}
+.hero h2{font:400 clamp(34px,6vw,58px)/1.05 var(--f-display);letter-spacing:-.015em}
+.hero h2 em{font-style:italic;color:var(--accent)}
+.hero p{font-size:16px;color:var(--ink-2);max-width:60ch;margin:14px 0 0}
+.search{display:flex;gap:8px;margin-top:22px;background:var(--surface);border:1px solid var(--line-2);border-radius:14px;padding:6px;box-shadow:var(--shadow)}
+.search input{flex:1;min-width:0;border:0;background:none;font:500 17px var(--f-ui);padding:10px 12px;color:var(--ink)}
+.search input::placeholder{color:var(--muted)}
+.search .btn{border-radius:10px;padding:10px 18px;font-size:14px}
+.opts{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:12px}
+.seg{display:inline-flex;background:var(--surface-2);border-radius:9px;padding:3px}
+.seg button{border:0;background:none;padding:6px 11px;border-radius:7px;font-weight:600;color:var(--ink-2);cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:var(--shadow)}
+.chip{display:inline-flex;align-items:center;gap:6px;padding:5px 10px;border-radius:999px;border:1px solid var(--line-2);background:var(--surface);color:var(--ink-2);font-weight:600;font-size:12.5px;cursor:pointer;white-space:nowrap}
+.chip[aria-pressed="true"]{background:var(--accent-soft);border-color:var(--accent);color:var(--accent-ink)}
+.chip.off{opacity:.5;text-decoration:line-through}
+.chip .n{font:500 11px var(--f-mono);color:var(--muted)}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.lbl{font:600 11.5px/1 var(--f-mono);text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-right:2px}
+.examples{margin-top:18px;display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.examples .chip{background:none}
+.recent{margin:36px 0 60px}
+.recent h3,.sec-h h2{font:400 26px/1.1 var(--f-display)}
+.rgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px;margin-top:12px}
+.rcard{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px 16px;cursor:pointer;display:grid;gap:6px;text-align:left}
+.rcard:hover{border-color:var(--accent)}
+.rcard .t{font-weight:700;font-size:15px}
+.rcard .m{font:500 11.5px var(--f-mono);color:var(--muted)}
+.rcard .s{font-size:12.5px;color:var(--ink-2)}
+.empty{border:2px dashed var(--line-2);border-radius:14px;padding:28px 18px;text-align:center;color:var(--muted);font-size:13.5px}
+.empty b{display:block;color:var(--ink);font:400 22px var(--f-display);margin-bottom:6px}
+.note{background:var(--warn-bg);color:var(--ink);border:1px solid color-mix(in srgb,var(--warn) 40%,var(--line));border-radius:10px;padding:10px 14px;font-size:13px;margin:12px 0}
+.note.err{background:var(--crit-bg);border-color:color-mix(in srgb,var(--crit) 40%,var(--line))}
+
+/* job header + progress */
+.jobhead{padding:22px 0 10px;display:flex;flex-wrap:wrap;gap:12px 24px;align-items:flex-end;justify-content:space-between}
+.jobhead h2{font:400 clamp(26px,4vw,40px)/1.1 var(--f-display)}
+.jobhead .meta{display:flex;flex-wrap:wrap;gap:6px 14px;font:500 12px var(--f-mono);color:var(--muted);margin-top:6px}
+.progress{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:8px;margin:12px 0 6px}
+.src{display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:9px 12px;font-size:12.5px}
+.src .lg{flex:none}
+.src .t{min-width:0;flex:1}
+.src .t b{display:block;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.src .t span{color:var(--muted);font:500 11px var(--f-mono)}
+.src .st{font:600 11px var(--f-mono);padding:3px 7px;border-radius:6px;background:var(--surface-2);color:var(--ink-2);white-space:nowrap}
+.src.done .st{background:var(--good-bg);color:var(--good)} .src.failed .st,.src.empty .st{background:var(--crit-bg);color:var(--crit)} .src.running .st{background:var(--flare-soft);color:var(--flare)}
+.summary{background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:14px;padding:16px 18px;margin:14px 0 18px;display:grid;gap:8px}
+.summary p{margin:0;font-size:15px;line-height:1.55;color:var(--ink)}
+.summary .nq{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.summary .brainst{font:500 11.5px var(--f-mono);color:var(--muted)}
+
+/* filters */
+.filters{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding-block:10px 4px}
+.filters input[type=search]{flex:1 1 200px;min-width:0;padding:9px 12px;border:1px solid var(--line-2);border-radius:9px;background:var(--surface);color:var(--ink);font:500 14px var(--f-ui)}
+.toggle{display:inline-flex;align-items:center;gap:8px;font-weight:600;color:var(--ink-2);cursor:pointer;padding:6px 4px}
+.toggle input{accent-color:var(--accent);width:16px;height:16px}
+.catrow{display:flex;flex-wrap:wrap;gap:6px;padding-block:6px 12px}
+
+/* kpis + radar */
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-block:8px 18px}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:13px 15px;display:flex;flex-direction:column;gap:4px}
+.kpi .l{font:600 11px/1.3 var(--f-mono);text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.kpi .v{font:400 32px/1 var(--f-display)} .kpi .v small{font:500 12px var(--f-ui);color:var(--muted);margin-left:6px}
+.kpi .s{font-size:12px;color:var(--ink-2)} .kpi.flare .v{color:var(--flare)}
+.radar{display:grid;grid-template-columns:minmax(0,1fr) 330px;gap:20px;align-items:start}
+@media (max-width:1040px){.radar{grid-template-columns:1fr}}
+.sec-h{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:4px 12px;margin:6px 0 12px}
+.sec-h .sub{font-size:12.5px;color:var(--muted)}
+.sigs{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px}
+.sig{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:16px 16px 12px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.sig.caution{border-color:color-mix(in srgb,var(--warn) 45%,var(--line))} .sig.avoid{opacity:.72}
+.sig-top{display:grid;grid-template-columns:56px minmax(0,1fr) 34px;gap:12px;align-items:start}
+.ring{width:56px;height:56px;position:relative} .ring svg{width:56px;height:56px;transform:rotate(-90deg)}
+.ring .track{stroke:var(--surface-2)} .ring .bar{stroke:var(--accent);stroke-linecap:round} .ring.hot .bar{stroke:var(--flare)}
+.ring .num{position:absolute;inset:0;display:grid;place-items:center;font:600 15px var(--f-mono)}
+.sig h3{font:700 16px/1.25 var(--f-ui);margin-top:4px;overflow-wrap:anywhere}
+.tags{display:flex;flex-wrap:wrap;gap:5px;align-items:center}
+.tag{font:600 11px/1 var(--f-mono);padding:4px 7px;border-radius:6px;background:var(--surface-2);color:var(--ink-2);white-space:nowrap}
+.tag.cat{background:var(--accent-soft);color:var(--accent-ink)} .tag.safe{background:var(--good-bg);color:var(--good)} .tag.caution{background:var(--warn-bg);color:var(--warn)} .tag.avoid{background:var(--crit-bg);color:var(--crit)} .tag.rise{background:var(--flare-soft);color:var(--flare)}
+.plats{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:6px}
+.lg{display:inline-grid;place-items:center;width:24px;height:24px;border-radius:7px;background:var(--surface-2);color:var(--brand,var(--ink));flex:none}
+.lg svg{width:14px;height:14px;fill:currentColor} .lg.big{width:34px;height:34px;border-radius:10px} .lg.big svg{width:20px;height:20px} .lg.xs{width:18px;height:18px;border-radius:5px} .lg.xs svg{width:11px;height:11px}
+.plats .k{font:500 11.5px var(--f-mono);color:var(--muted)}
+.pin{width:34px;height:34px;border-radius:9px;border:1px solid var(--line);background:var(--surface);cursor:pointer;display:grid;place-items:center;color:var(--muted)}
+.pin svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linejoin:round}
+.pin[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#fff} .pin[aria-pressed="true"] svg{fill:currentColor}
+:root[data-theme="dark"] .pin[aria-pressed="true"]{color:#0E1311}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .pin[aria-pressed="true"]{color:#0E1311}}
+.why{margin:0;color:var(--ink-2);font-size:13.5px}
+.sig details{border-top:1px solid var(--line);padding-top:8px}
+.sig summary{cursor:pointer;font-weight:700;font-size:12.5px;color:var(--accent-ink);list-style:none;display:flex;justify-content:space-between}
+.sig summary::-webkit-details-marker{display:none} .sig summary::after{content:"+";font:500 16px var(--f-mono);color:var(--muted)} .sig details[open] summary::after{content:"−"}
+.angles{margin:10px 0 0;padding-left:18px;display:grid;gap:6px;font-size:13px}
+.formats{display:flex;flex-wrap:wrap;gap:5px;margin-top:10px}
+.ev{list-style:none;margin:12px 0 0;padding:0;display:grid;gap:6px}
+.ev li{display:grid;grid-template-columns:18px minmax(0,1fr) auto;gap:8px;align-items:center;font-size:12.5px}
+.ev a{color:var(--ink);text-decoration:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap} .ev a:hover{color:var(--accent);text-decoration:underline}
+.ev .m{font:500 11.5px var(--f-mono);color:var(--muted);white-space:nowrap}
+.rail{display:grid;gap:14px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px 16px}
+.panel h3{font:400 20px/1.1 var(--f-display);margin-bottom:10px} .panel .hint{font-size:12px;color:var(--muted);margin:-6px 0 10px}
+.bars{display:grid;gap:7px}
+.bar{display:grid;grid-template-columns:118px minmax(0,1fr) 34px;gap:8px;align-items:center;font-size:12.5px}
+.bar .lbl{color:var(--ink-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font:inherit;text-transform:none;letter-spacing:0;margin:0}
+.bar .trk{height:12px;background:var(--surface-2);border-radius:3px;overflow:hidden} .bar .fill{height:100%;background:var(--viz-1);border-radius:0 3px 3px 0;min-width:2px}
+.bar .val{font:500 12px var(--f-mono);text-align:right;font-variant-numeric:tabular-nums}
+.plist{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.plist li{display:grid;grid-template-columns:24px minmax(0,1fr) auto;gap:10px;align-items:center;font-size:12.5px}
+.plist .t{overflow:hidden;text-overflow:ellipsis;white-space:nowrap} .plist .t small{display:block;color:var(--muted);font:500 11px var(--f-mono)} .plist .n{font:500 12px var(--f-mono);color:var(--muted)}
+.series{width:100%;height:70px} .series path.a{fill:var(--accent-soft)} .series path.l{fill:none;stroke:var(--accent);stroke-width:2;stroke-linejoin:round} .series circle{fill:var(--accent)} .series text{font:500 10px var(--f-mono);fill:var(--muted)}
+.spark{width:84px;height:26px;flex:none} .spark path.a{fill:var(--flare-soft)} .spark path.l{fill:none;stroke:var(--flare);stroke-width:2;stroke-linejoin:round;stroke-linecap:round} .spark circle{fill:var(--flare)}
+.spark.down path.a{fill:var(--surface-2)} .spark.down path.l{stroke:var(--muted)} .spark.down circle{fill:var(--muted)}
+
+/* platforms */
+.pgrid{columns:3 350px;column-gap:16px;padding-top:6px}
+.pcard{break-inside:avoid;margin:0 0 16px;background:var(--surface);border:1px solid var(--line);border-radius:16px;overflow:hidden}
+.pcard-h{display:flex;align-items:center;gap:12px;padding:14px 16px;border-bottom:1px solid var(--line)}
+.pcard-h h2{font:700 17px/1.2 var(--f-ui)} .pcard-h .src2{font:500 11.5px var(--f-mono);color:var(--muted)} .pcard-h .cnt{margin-left:auto;font:500 12px var(--f-mono);color:var(--muted)}
+.rows{list-style:none;margin:0;padding:4px 0}
+.row{display:grid;grid-template-columns:30px minmax(0,1fr) 30px;gap:6px 10px;padding:9px 14px;border-top:1px solid var(--line);align-items:start}
+.row:first-child{border-top:0} .row.off{opacity:.5}
+.row .rk{font:500 12.5px/1.6 var(--f-mono);color:var(--muted);font-variant-numeric:tabular-nums}
+.row .t a{font-weight:600;color:var(--ink);text-decoration:none;overflow-wrap:anywhere} .row .t a:hover{color:var(--accent);text-decoration:underline}
+.row .meta{display:flex;flex-wrap:wrap;gap:4px 10px;align-items:center;margin-top:3px;font:500 11.5px/1.5 var(--f-mono);color:var(--muted)}
+.row .meta .m{color:var(--accent-ink)} .row .meta .g{color:var(--flare)} .row .meta .tag{padding:2px 6px;font-size:10.5px}
+.row .pin{width:28px;height:28px;border-radius:7px} .row .pin svg{width:14px;height:14px}
+.more{display:block;width:100%;padding:10px;border:0;border-top:1px solid var(--line);background:none;color:var(--accent-ink);font-weight:700;font-size:12.5px;cursor:pointer}
+.pnote{padding:10px 16px;font-size:12px;color:var(--muted);border-top:1px solid var(--line);background:var(--surface-2)}
+
+/* table */
+.tblwrap{overflow-x:auto;border:1px solid var(--line);border-radius:14px;background:var(--surface);margin-top:8px}
+table{border-collapse:collapse;width:100%;min-width:900px;font-size:13px}
+th,td{padding:9px 12px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+th{position:sticky;top:0;background:var(--surface-2);font:600 11.5px var(--f-mono);text-transform:uppercase;letter-spacing:.05em;color:var(--ink-2);cursor:pointer;white-space:nowrap;user-select:none}
+th[aria-sort]::after{content:" ↓";color:var(--accent)} th[aria-sort="ascending"]::after{content:" ↑"}
+td.num{font:500 12.5px var(--f-mono);text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+td a{color:var(--ink);text-decoration:none} td a:hover{text-decoration:underline;color:var(--accent)}
+.tbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between;padding-block:8px} .tbar .sub{font-size:12.5px;color:var(--muted)}
+
+/* sources + prose */
+.srcs{display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:12px;padding-top:6px}
+.srcbox{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px 16px;display:grid;gap:6px}
+.srcbox .h{display:flex;align-items:center;gap:10px;font-weight:700}
+.srcbox dl{margin:0;display:grid;grid-template-columns:auto 1fr;gap:3px 12px;font-size:12.5px} .srcbox dt{font:500 11.5px var(--f-mono);color:var(--muted)} .srcbox dd{margin:0;color:var(--ink-2);overflow-wrap:anywhere}
+.prose{max-width:68ch;color:var(--ink-2);font-size:14px} .prose h2{font:400 26px/1.1 var(--f-display);color:var(--ink);margin:22px 0 8px} .prose code{font:500 12.5px var(--f-mono);background:var(--surface-2);padding:1px 5px;border-radius:4px}
+
+/* shortlist drawer + modal */
+.drawer{position:fixed;top:0;right:0;bottom:0;width:min(440px,100%);background:var(--surface);border-left:1px solid var(--line);box-shadow:var(--shadow);z-index:30;display:flex;flex-direction:column;transform:translateX(100%);transition:transform .25s ease}
+.drawer.open{transform:none}
+.drawer .dh{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--line)}
+.drawer .dh h3{font:400 22px var(--f-display)}
+.drawer .db{overflow:auto;padding:12px 16px;display:grid;gap:10px;align-content:start}
+.card{background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:12px;display:grid;gap:8px}
+.card h4{font:700 14px/1.3 var(--f-ui)} .card .meta{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.card textarea{width:100%;min-height:54px;resize:vertical;border:1px solid var(--line);border-radius:8px;padding:8px;background:var(--surface);color:var(--ink);font:13px/1.45 var(--f-ui)}
+.card .acts{display:flex;gap:6px;flex-wrap:wrap}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:40;display:grid;place-items:center;padding:16px}
+.modal .box{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:20px;width:min(520px,100%);max-height:90vh;overflow:auto;display:grid;gap:12px}
+.modal h3{font:400 26px var(--f-display)}
+.modal label{display:grid;gap:4px;font-weight:600;font-size:13px}
+.modal input,.modal select{padding:9px 11px;border:1px solid var(--line-2);border-radius:9px;background:var(--bg);color:var(--ink);font:500 13.5px var(--f-mono)}
+.modal .help{font-size:12.5px;color:var(--muted);font-weight:400}
+.modal fieldset{border:1px solid var(--line);border-radius:12px;padding:12px 14px;display:grid;gap:10px;margin:0}
+.modal legend{font:600 11.5px var(--f-mono);text-transform:uppercase;letter-spacing:.06em;color:var(--muted);padding:0 6px}
+.toast{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:9px 14px;border-radius:9px;font-weight:600;font-size:13px;box-shadow:var(--shadow);z-index:50}
+footer{padding:36px 0 30px;color:var(--muted);font-size:12.5px;display:flex;flex-wrap:wrap;gap:8px 20px;justify-content:space-between}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<header class="top"><div class="wrap">
+  <a class="brand" href="/" id="home-link">
+    <svg class="mark" viewBox="0 0 36 36" aria-hidden="true"><circle cx="18" cy="18" r="16" fill="none" stroke="var(--accent)" stroke-width="1.5" opacity=".45"/><circle cx="18" cy="18" r="10" fill="none" stroke="var(--accent)" stroke-width="1.5" opacity=".7"/><path d="M18 18 L18 3 A15 15 0 0 1 31 11 Z" fill="var(--accent)" opacity=".28"/><circle cx="18" cy="18" r="2.4" fill="var(--accent)"/><circle cx="25" cy="9.5" r="2" fill="var(--flare)"/></svg>
+    <h1>Trend <em>Radar</em></h1>
+  </a>
+  <div class="status" id="status"></div>
+  <nav class="tabs" id="tabs" hidden></nav>
+  <div class="topbtns">
+    <button class="btn" id="shortlist-btn" title="Shortlist">☆ <span id="shortlist-n">0</span></button>
+    <button class="btn icon" id="settings-btn" title="Settings" aria-label="Settings">⚙</button>
+  </div>
+</div></header>
+
+<main class="wrap" id="main"></main>
+<footer class="wrap"><span id="foot-l">Trend Radar · research any topic across seven platforms</span><span>Data via Apify actors · analysis via OpenRouter · logos: Simple Icons (CC0)</span></footer>
+
+<aside class="drawer" id="drawer" aria-label="Shortlist">
+  <div class="dh"><h3>Shortlist</h3><div><button class="btn ghost" id="copy-all">Copy all briefs</button><button class="btn icon" id="drawer-close" aria-label="Close">✕</button></div></div>
+  <div class="db" id="drawer-body"></div>
+</aside>
+
+<script src="/logos.js"></script>
+<script>
+/* ---------- constants ---------- */
+const PLAT = {
+  google:{name:"Google",color:"#4285F4",src:"Search interest / Trending Now"}, news:{name:"Google News",color:"#1A73E8",src:"News articles"},
+  youtube:{name:"YouTube",color:"#FF0000",src:"Videos"}, reddit:{name:"Reddit",color:"#FF4500",src:"Posts"},
+  x:{name:"X",color:"var(--ink)",src:"Posts / trends"}, tiktok:{name:"TikTok",color:"var(--ink)",src:"Videos / hashtags"},
+  instagram:{name:"Instagram",color:"#E4405F",src:"Reels"}, pinterest:{name:"Pinterest",color:"#BD081C",src:"Top searches"},
+};
+const TOPIC_PLATS = ["news","google","reddit","youtube","x","tiktok","instagram"];
+const TREND_PLATS = ["google","news","reddit","youtube","x","tiktok","pinterest","instagram"];
+const VIEWS = [["radar","Radar"],["platforms","Platforms"],["table","Table"],["sources","Sources"]];
+const CAT_ORDER = ["Sports","Entertainment","Music","Gaming","Tech & AI","Business","Politics & Law","Lifestyle & Seasonal","Fashion & Beauty","Food & Drink","Science & Nature","News & Weather","Health","Culture & Creators","Other"];
+const EXAMPLES = ["AI automation","skincare routine","IPL","electric scooters India","Diwali gifting","protein snacks","Taylor Swift","smart home"];
+
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const fmt = n => { if (n == null || n === "") return ""; n = +n; if (!isFinite(n)) return ""; return n >= 1e9 ? (n/1e9).toFixed(1)+"B" : n >= 1e6 ? (n/1e6).toFixed(1)+"M" : n >= 1e3 ? (n/1e3).toFixed(n>=1e4?0:1)+"K" : String(Math.round(n)); };
+const ago = h => h == null ? "" : h < 1 ? "<1h" : h < 48 ? Math.round(h)+"h" : Math.round(h/24)+"d";
+const tag = (t, cls="") => `<span class="tag ${cls}">${esc(t)}</span>`;
+const safetyTag = s => tag(s === "safe" ? "brand-safe" : s === "caution" ? "caution" : "avoid", s);
+
+/* ---------- settings (localStorage) ---------- */
+const SETTINGS_KEY = "tr-settings";
+let settings = {}; try { settings = JSON.parse(localStorage.getItem(SETTINGS_KEY) || "{}"); } catch {}
+function saveSettings(){ try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings)); } catch {} }
+function authHeaders(){ const h = {}; if (settings.apify) h["x-apify-token"] = settings.apify; if (settings.openrouter) h["x-openrouter-key"] = settings.openrouter; if (settings.model) h["x-openrouter-model"] = settings.model; if (settings.code) h["x-access-code"] = settings.code; return h; }
+async function api(path, opts={}) {
+  const res = await fetch(path, { ...opts, headers: { "Content-Type":"application/json", ...authHeaders(), ...(opts.headers||{}) } });
+  const json = await res.json().catch(() => ({ error: "Bad response from server" }));
+  if (!res.ok) { const e = new Error(json.error || res.statusText); e.status = res.status; throw e; }
+  return json;
+}
+
+/* ---------- state ---------- */
+let health = null, job = null, pollTimer = null;
+let state = { view:"radar", q:"", cats:new Set(), safeOnly:false, plats:new Set(), expanded:new Set(), sort:{k:"score",d:-1}, showOff:false };
+let form = { mode:"topic", topic:"", region:"US", windowH:24, plats:new Set(TOPIC_PLATS) };
+let pins = []; try { pins = JSON.parse(localStorage.getItem("tr-pins") || "[]"); } catch {}
+const savePins = () => { try { localStorage.setItem("tr-pins", JSON.stringify(pins)); } catch {} $("#shortlist-n").textContent = pins.length; };
+
+function logo(p, cls="") { const d = window.LOGOS?.[p]; const c = PLAT[p]?.color || "var(--ink)"; return `<span class="lg ${cls}" style="--brand:${c}" title="${esc(PLAT[p]?.name||p)}">${d ? `<svg viewBox="0 0 24 24" role="img" aria-label="${esc(PLAT[p]?.name||p)}"><path d="${d}"/></svg>` : esc((PLAT[p]?.name||p)[0])}</span>`; }
+function ring(score, hot) { const r=24, c=2*Math.PI*r, f=Math.max(0,Math.min(100,score))/100; return `<div class="ring${hot?" hot":""}" title="Opportunity score ${score}/100"><svg viewBox="0 0 56 56"><circle class="track" cx="28" cy="28" r="${r}" fill="none" stroke-width="5"/><circle class="bar" cx="28" cy="28" r="${r}" fill="none" stroke-width="5" stroke-dasharray="${(c*f).toFixed(1)} ${c.toFixed(1)}"/></svg><span class="num">${score}</span></div>`; }
+function spark(curve, dir) { if (!curve?.length) return ""; const w=84,h=26,pad=3,n=curve.length,max=Math.max(...curve,1); const pts=curve.map((v,i)=>[pad+i*(w-2*pad)/Math.max(n-1,1), h-pad-(v/max)*(h-2*pad)]); const line=pts.map((p,i)=>(i?"L":"M")+p[0].toFixed(1)+" "+p[1].toFixed(1)).join(" "); const area=line+` L${pts[n-1][0].toFixed(1)} ${h-pad} L${pts[0][0].toFixed(1)} ${h-pad} Z`; const [ex,ey]=pts[n-1]; return `<svg class="spark${dir==="down"?" down":""}" viewBox="0 0 ${w} ${h}" role="img" aria-label="7-day trend"><path class="a" d="${area}"/><path class="l" d="${line}"/><circle cx="${ex.toFixed(1)}" cy="${ey.toFixed(1)}" r="2.6"/></svg>`; }
+function seriesChart(series) {
+  const pts = series?.points || []; if (pts.length < 3) return "";
+  const w=300,h=70,pad=6,max=100; const xs=pts.map((p,i)=>pad+i*(w-2*pad)/(pts.length-1)); const ys=pts.map(p=>h-14-(p.v/max)*(h-22));
+  const line=xs.map((x,i)=>(i?"L":"M")+x.toFixed(1)+" "+ys[i].toFixed(1)).join(" "); const area=line+` L${xs.at(-1).toFixed(1)} ${h-14} L${xs[0].toFixed(1)} ${h-14} Z`;
+  const first=new Date(pts[0].t*1000), last=new Date(pts.at(-1).t*1000); const f=d=>d.toLocaleDateString([], {month:"short", day:"numeric"});
+  const peak = pts.reduce((m,p,i)=>p.v>pts[m].v?i:m,0);
+  return `<svg class="series" viewBox="0 0 ${w} ${h}" role="img" aria-label="Google search interest over time"><path class="a" d="${area}"/><path class="l" d="${line}"/><circle cx="${xs[peak].toFixed(1)}" cy="${ys[peak].toFixed(1)}" r="3"/><text x="${pad}" y="${h-2}">${f(first)}</text><text x="${w-pad}" y="${h-2}" text-anchor="end">${f(last)}</text><text x="${Math.min(w-30,Math.max(30,xs[peak])).toFixed(1)}" y="${Math.max(9,ys[peak]-6).toFixed(1)}" text-anchor="middle">peak ${pts[peak].v}</text></svg>`;
+}
+const pinBtn = (id, small) => `<button class="pin" data-pin="${esc(id)}" aria-pressed="${pins.some(p=>p.id===id)}" title="Add to shortlist"><svg viewBox="0 0 24 24"><path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z"/></svg></button>`;
+
+/* ---------- routing ---------- */
+function route() {
+  const m = location.pathname.match(/^\/r\/([a-z0-9]+)/i) || location.search.match(/[?&]job=([a-z0-9]+)/i);
+  const id = m?.[1]; const hash = (location.hash || "#radar").slice(1);
+  state.view = VIEWS.some(v => v[0] === hash) ? hash : "radar";
+  if (id) loadJob(id); else renderHome();
+}
+function go(path) { history.pushState({}, "", path); route(); }
+window.addEventListener("popstate", route);
+window.addEventListener("hashchange", () => { if (job) { state.view = (location.hash||"#radar").slice(1); renderJob(); } });
+$("#home-link").addEventListener("click", e => { e.preventDefault(); stopPolling(); job = null; go("/"); });
+
+/* ---------- home ---------- */
+async function renderHome() {
+  $("#tabs").hidden = true; $("#status").innerHTML = "";
+  const m = $("#main");
+  const plats = form.mode === "topic" ? TOPIC_PLATS : TREND_PLATS;
+  m.innerHTML = `
+  <section class="hero">
+    <h2>What is the internet saying about <em>this</em>, right now?</h2>
+    <p>Type a topic, a brand, a theme. Trend Radar searches Google News, Google Trends, Reddit, YouTube, X, TikTok and Instagram for the last ${form.windowH}h, groups what it finds into signals, and writes the content angles a marketer can act on today.</p>
+    <form class="search" id="form" role="search">
+      <input id="topic" type="search" placeholder="${form.mode==="topic"?"e.g. AI automation, skincare, IPL, Diwali gifting…":"Trending now: no topic needed"}" value="${esc(form.topic)}" ${form.mode==="topic"?"":"disabled"} aria-label="Topic" autocomplete="off">
+      <button class="btn primary" type="submit" id="run">${form.mode==="topic"?"Research":"Scan trends"} →</button>
+    </form>
+    <div class="opts">
+      <span class="lbl">Mode</span><div class="seg"><button type="button" data-mode="topic" aria-pressed="${form.mode==="topic"}">Research a topic</button><button type="button" data-mode="trending" aria-pressed="${form.mode==="trending"}">What's trending now</button></div>
+      <span class="lbl">Region</span><div class="seg">${["US","IN","GB","Global"].map(r=>`<button type="button" data-region="${r}" aria-pressed="${form.region===r}">${r}</button>`).join("")}</div>
+      <span class="lbl">Window</span><div class="seg">${[[24,"24h"],[48,"48h"],[168,"7 days"]].map(([v,l])=>`<button type="button" data-window="${v}" aria-pressed="${form.windowH===v}">${l}</button>`).join("")}</div>
+    </div>
+    <div class="opts"><span class="lbl">Platforms</span><div class="chips">${plats.map(p=>`<button type="button" class="chip${form.plats.has(p)?"":" off"}" data-plat="${p}" aria-pressed="${form.plats.has(p)}">${logo(p,"xs")}${PLAT[p].name}</button>`).join("")}</div></div>
+    ${form.mode==="topic"?`<div class="examples"><span class="lbl">Try</span>${EXAMPLES.map(e=>`<button type="button" class="chip" data-example="${esc(e)}">${esc(e)}</button>`).join("")}</div>`:""}
+    <div id="home-note"></div>
+  </section>
+  <section class="recent"><div class="sec-h"><h3>Recent research</h3><span class="sub" id="recent-sub"></span></div><div id="recent"><div class="empty">Loading…</div></div></section>`;
+
+  m.querySelector("#form").addEventListener("submit", e => { e.preventDefault(); form.topic = m.querySelector("#topic").value; startResearch(); });
+  m.querySelectorAll("[data-mode]").forEach(b => b.addEventListener("click", () => { form.mode = b.dataset.mode; form.plats = new Set(form.mode==="topic"?TOPIC_PLATS:TREND_PLATS); renderHome(); }));
+  m.querySelectorAll("[data-region]").forEach(b => b.addEventListener("click", () => { form.region = b.dataset.region; renderHome(); }));
+  m.querySelectorAll("[data-window]").forEach(b => b.addEventListener("click", () => { form.windowH = +b.dataset.window; renderHome(); }));
+  m.querySelectorAll("[data-plat]").forEach(b => b.addEventListener("click", () => { const p=b.dataset.plat; form.plats.has(p)?form.plats.delete(p):form.plats.add(p); renderHome(); }));
+  m.querySelectorAll("[data-example]").forEach(b => b.addEventListener("click", () => { form.topic = b.dataset.example; m.querySelector("#topic").value = form.topic; startResearch(); }));
+
+  try { health = health || await api("/api/health"); } catch {}
+  if (health && !health.server_keys && !settings.apify) $("#home-note").innerHTML = `<div class="note">This deployment has no shared Apify token. Open <b>Settings</b> (⚙) and add your own Apify token and OpenRouter key to run research.</div>`;
+  else if (health?.access_code && !settings.code && !settings.apify) $("#home-note").innerHTML = `<div class="note">This site needs an access code. Open <b>Settings</b> (⚙) and enter it once.</div>`;
+  loadRecent();
+}
+async function loadRecent() {
+  const box = $("#recent"); if (!box) return;
+  try {
+    const { jobs, key_source } = await api("/api/jobs");
+    $("#recent-sub").textContent = key_source === "byo" ? "from your Apify account" : "shared on this site";
+    box.innerHTML = jobs.length ? `<div class="rgrid">${jobs.slice(0,24).map(j => `<button class="rcard" data-open="${j.id}"><span class="t">${esc(j.topic)}</span><span class="m">${esc(j.region)} · ${j.windowH}h · ${new Date(j.created_at).toLocaleString([], {dateStyle:"medium", timeStyle:"short"})} · ${j.status==="running"?"running":j.n_items+" results"}</span>${j.top?`<span class="s">Top signal: ${esc(j.top)}</span>`:""}</button>`).join("")}</div>` : `<div class="empty"><b>No research yet</b>Your first run will appear here, and every run gets a shareable link.</div>`;
+    box.querySelectorAll("[data-open]").forEach(b => b.addEventListener("click", () => go("/r/"+b.dataset.open)));
+  } catch (e) { box.innerHTML = `<div class="empty">${esc(e.message)}</div>`; }
+}
+async function startResearch() {
+  const btn = $("#run"); btn.disabled = true; btn.textContent = "Starting…";
+  try {
+    const { job: j } = await api("/api/research", { method:"POST", body: JSON.stringify({ mode: form.mode, topic: form.topic, region: form.region, windowH: form.windowH, platforms: [...form.plats] }) });
+    job = j; go("/r/"+j.id);
+  } catch (e) { $("#home-note").innerHTML = `<div class="note err">${esc(e.message)}</div>`; btn.disabled = false; btn.textContent = form.mode==="topic"?"Research →":"Scan trends →"; }
+}
+
+/* ---------- job ---------- */
+async function loadJob(id) {
+  if (!job || job.id !== id) { $("#main").innerHTML = `<div class="empty" style="margin-top:40px"><b>Loading research…</b></div>`; job = null; }
+  try { const r = await api("/api/job?id="+id); job = r.job; renderJob(); schedulePoll(); }
+  catch (e) { $("#main").innerHTML = `<div class="note err" style="margin-top:30px">${esc(e.message)} <button class="btn ghost" onclick="location.href='/'">Back</button></div>`; }
+}
+function schedulePoll() { stopPolling(); if (job?.status === "running" || job?.brain?.status === "running") pollTimer = setTimeout(() => loadJob(job.id), 3500); }
+function stopPolling() { clearTimeout(pollTimer); pollTimer = null; }
+
+const items = () => (job?.items || []).filter(i => state.showOff || !i.offtopic);
+function visibleItems() {
+  const q = state.q.trim().toLowerCase();
+  return items().filter(it => (!state.cats.size || state.cats.has(it.category)) && (!state.safeOnly || it.safety === "safe") && (!state.plats.size || state.plats.has(it.platform)) &&
+    (!q || it.topic.toLowerCase().includes(q) || (it.extra||"").toLowerCase().includes(q) || (it.related||[]).join(" ").toLowerCase().includes(q) || (it.category||"").toLowerCase().includes(q)));
+}
+function visibleClusters() {
+  const q = state.q.trim().toLowerCase();
+  return (job.clusters || []).filter(c => (!state.cats.size || state.cats.has(c.category)) && (!state.safeOnly || c.safety === "safe") && (!state.plats.size || c.platforms.some(p => state.plats.has(p))) &&
+    (!q || c.name.toLowerCase().includes(q) || (c.why||"").toLowerCase().includes(q) || c.evidence.some(e => e.topic.toLowerCase().includes(q))));
+}
+
+function renderJob() {
+  const running = job.status === "running";
+  $("#tabs").hidden = false;
+  $("#tabs").innerHTML = VIEWS.map(([k,l]) => `<a href="#${k}" aria-current="${state.view===k?"page":"false"}">${l}${k==="radar"&&job.clusters?.length?`<span class="n">${job.clusters.length}</span>`:""}</a>`).join("");
+  const when = new Date(job.created_at);
+  $("#status").innerHTML = `<span><span class="dot${running?" run":""}"></span>${running?"Running":"Done"} <b>${when.toLocaleString([], {dateStyle:"medium", timeStyle:"short"})}</b></span><span>Window <b>${job.windowH}h</b></span><span>Region <b>${esc(job.region)}</b></span><span><b>${items().length}</b> results</span>`;
+
+  const head = `<div class="jobhead"><div><h2>${job.mode==="topic"?esc(job.topic):"What's trending now"}</h2><div class="meta"><span>${job.mode==="topic"?"Topic research":"Trend scan"}</span><span>${esc(job.region)} · last ${job.windowH}h</span><span>${job.sources.filter(s=>s.status==="done").length}/${job.sources.length} sources</span>${job.brain?.model?`<span>brain: ${esc(job.brain.model)}</span>`:""}</div></div>
+    <div class="topbtns"><button class="btn" id="share">Copy link</button><button class="btn" id="rerun">Run again</button>${job.brain?.status==="failed"||job.brain?.status==="skipped"?`<button class="btn primary" id="retry-brain">Analyse with AI</button>`:""}</div></div>
+    ${job.error?`<div class="note err">${esc(job.error)}</div>`:""}
+    <div class="progress">${job.sources.map(s => `<div class="src ${s.status}">${logo(s.platform)}<div class="t"><b>${esc(s.label||PLAT[s.platform]?.name)}</b><span>${esc(s.actor)}</span></div><span class="st" title="${esc(s.error||"")}">${s.status==="running"?"running…":s.status==="done"?s.count+" rows":s.status==="empty"?"no results":s.status==="failed"?"failed":"queued"}</span></div>`).join("")}</div>`;
+  const brainBox = job.brain?.status === "running" || (running && job.brain?.status === "pending")
+    ? `<div class="summary"><span class="brainst">${job.brain?.status==="running"?"Analysing results with AI… (20–60s)":"Collecting results… the AI analysis runs when all sources are in."}</span></div>`
+    : job.summary ? `<div class="summary"><p>${esc(job.summary)}</p>${job.next_queries?.length?`<div class="nq"><span class="lbl">Research next</span>${job.next_queries.map(q=>`<button class="chip" data-next="${esc(q)}">${esc(q)}</button>`).join("")}</div>`:""}</div>`
+    : job.brain?.status === "failed" ? `<div class="note">AI analysis failed: ${esc(job.brain.error)}</div>`
+    : job.brain?.status === "skipped" ? `<div class="note">${esc(job.brain.error||"AI analysis skipped.")}</div>` : "";
+
+  const body = ({ radar: renderRadar, platforms: renderPlatforms, table: renderTable, sources: renderSources }[state.view] || renderRadar)();
+  $("#main").innerHTML = head + brainBox + body;
+  bindJob();
+}
+function filtersHTML(opts={}) {
+  const counts = {}; items().forEach(i => counts[i.category] = (counts[i.category]||0)+1);
+  const cats = CAT_ORDER.filter(c => counts[c]); const pc = {}; items().forEach(i => pc[i.platform] = (pc[i.platform]||0)+1);
+  return `<div class="filters"><input id="q" type="search" placeholder="Filter results…" value="${esc(state.q)}" aria-label="Filter">
+    <label class="toggle"><input type="checkbox" id="safe" ${state.safeOnly?"checked":""}> Brand-safe only</label>
+    ${job.stats?.offtopic?`<label class="toggle"><input type="checkbox" id="showoff" ${state.showOff?"checked":""}> Show ${job.stats.offtopic} off-topic</label>`:""}
+    ${opts.platforms?`<div class="chips">${Object.keys(PLAT).filter(p=>pc[p]).map(p=>`<button class="chip" data-fplat="${p}" aria-pressed="${state.plats.has(p)}">${logo(p,"xs")}${PLAT[p].name}<span class="n">${pc[p]}</span></button>`).join("")}</div>`:""}</div>
+    <div class="catrow">${cats.map(c=>`<button class="chip" data-cat="${esc(c)}" aria-pressed="${state.cats.has(c)}">${esc(c)}<span class="n">${counts[c]}</span></button>`).join("")}</div>`;
+}
+function renderRadar() {
+  const its = visibleItems(), cl = visibleClusters();
+  const rising = its.filter(i => i.momentum >= 14).length, cross = cl.filter(c => c.platforms.length >= 2).length;
+  const safePct = cl.length ? Math.round(100*cl.filter(c=>c.safety==="safe").length/cl.length) : null;
+  const catCounts = {}; its.forEach(i => catCounts[i.category] = (catCounts[i.category]||0)+1);
+  const catRows = CAT_ORDER.filter(c=>catCounts[c]).map(c=>[c,catCounts[c]]); const catMax = Math.max(1, ...catRows.map(r=>r[1]));
+  const byPlat = {}; its.forEach(i => (byPlat[i.platform] ||= []).push(i));
+  const tt = its.filter(i => i.curve).sort((a,b)=>(b.direction==="up")-(a.direction==="up")||b.metric-a.metric).slice(0,6);
+  return filtersHTML() + `
+  <div class="kpis">
+    <div class="kpi"><span class="l">Results</span><span class="v">${its.length}<small>of ${items().length}</small></span><span class="s">${job.sources.filter(s=>s.status==="done").length} platforms returned data</span></div>
+    <div class="kpi"><span class="l">Signals</span><span class="v">${cl.length}</span><span class="s">${cross} seen on 2+ platforms</span></div>
+    <div class="kpi flare"><span class="l">Fresh</span><span class="v">${rising}</span><span class="s">results with strong momentum</span></div>
+    <div class="kpi"><span class="l">Top signal</span><span class="v" style="font-size:20px;line-height:1.15">${cl[0]?esc(cl[0].name.split(":")[0]):"—"}</span><span class="s">${cl[0]?`score ${cl[0].score} · ${cl[0].platforms.length} platforms`:job.status==="running"?"waiting for analysis":"no signals"}</span></div>
+    ${safePct!=null?`<div class="kpi"><span class="l">Brand-safe</span><span class="v">${safePct}<small>%</small></span><span class="s">of signals cleared for brand use</span></div>`:""}
+  </div>
+  <div class="radar"><section>
+    <div class="sec-h"><h2>Signals</h2><span class="sub">ranked by reach × breadth × momentum, brand safety applied</span></div>
+    ${cl.length ? `<div class="sigs">${cl.map(sigCard).join("")}</div>` : job.status==="running" ? `<div class="empty"><b>Collecting…</b>Signals appear when every platform has answered and the AI has grouped the results.</div>` : `<div class="empty"><b>No signals</b>${job.brain?.status==="skipped"||job.brain?.status==="failed"?"Add an OpenRouter key in Settings and press “Analyse with AI”, or browse the raw results under Platforms.":"Nothing matches these filters."}</div>`}
+  </section><aside class="rail">
+    ${job.series?`<div class="panel"><h3>Search interest</h3><p class="hint">${esc(job.series.label)} · Google Trends, 0–100</p>${seriesChart(job.series)}</div>`:""}
+    <div class="panel"><h3>Category mix</h3><p class="hint">Results per category</p><div class="bars">${catRows.map(([c,n])=>`<div class="bar" title="${esc(c)}: ${n} (${Math.round(100*n/Math.max(its.length,1))}%)"><span class="lbl">${esc(c)}</span><span class="trk"><span class="fill" style="width:${(100*n/catMax).toFixed(1)}%"></span></span><span class="val">${n}</span></div>`).join("")||`<span class="hint">No results yet</span>`}</div></div>
+    ${tt.length?`<div class="panel"><h3>TikTok momentum</h3><p class="hint">7-day interest curves</p><ul class="plist">${tt.map(i=>`<li>${logo("tiktok")}<div class="t"><a href="${esc(i.url)}" target="_blank" rel="noopener" style="text-decoration:none">${esc(i.topic)}</a><small>${fmt(i.metric)} views · ${i.direction}</small></div>${spark(i.curve,i.direction)}</li>`).join("")}</ul></div>`:""}
+    <div class="panel"><h3>Leader per platform</h3><ul class="plist">${Object.keys(PLAT).filter(p=>byPlat[p]).map(p=>{const i=byPlat[p].sort((a,b)=>a.rank-b.rank)[0]; return `<li>${logo(p)}<div class="t"><a href="${esc(i.url)}" target="_blank" rel="noopener" style="text-decoration:none">${esc(i.topic)}</a><small>${esc(PLAT[p].name)}${i.metric?` · ${fmt(i.metric)} ${esc(i.metric_label)}`:""}</small></div><span class="n">${byPlat[p].length}</span></li>`;}).join("")||`<li class="hint">No results yet</li>`}</ul></div>
+  </aside></div>`;
+}
+function sigCard(c) {
+  const hot = c.momentum >= 18 && c.score >= 75; const open = state.expanded.has(c.id);
+  return `<article class="sig ${c.safety}"><div class="sig-top">${ring(c.score, hot)}<div><div class="tags">${tag(c.category,"cat")}${safetyTag(c.safety)}${hot?tag("rising","rise"):""}</div><h3>${esc(c.name)}</h3><div class="plats">${c.platforms.map(p=>logo(p)).join("")}<span class="k">${c.n_items} result${c.n_items>1?"s":""} on ${c.platforms.length} platform${c.platforms.length>1?"s":""}</span></div></div>${pinBtn("sig:"+job.id+":"+c.id)}</div>
+    <p class="why">${esc(c.why)}</p>
+    <details ${open?"open":""} data-x="${esc(c.id)}"><summary>Content angles &amp; evidence</summary><ul class="angles">${c.angles.map(a=>`<li>${esc(a)}</li>`).join("")}</ul><div class="formats">${c.formats.map(f=>tag(f)).join("")}</div>
+    <ol class="ev">${c.evidence.map(e=>`<li>${logo(e.platform,"xs")}<a href="${esc(e.url)}" target="_blank" rel="noopener" title="${esc(e.topic)}">${esc(e.topic)}</a><span class="m">${e.metric?fmt(e.metric)+" "+esc(e.metric_label):"#"+e.rank}</span></li>`).join("")}</ol></details></article>`;
+}
+function renderPlatforms() {
+  const its = visibleItems(); const by = {}; its.forEach(i => (by[i.platform] ||= []).push(i));
+  const order = Object.keys(PLAT).filter(p => by[p]);
+  return filtersHTML({platforms:true}) + `<div class="pgrid">${order.map(p => { const list = by[p].slice().sort((a,b)=>a.rank-b.rank); const all = state.expanded.has("p:"+p); const shown = all?list:list.slice(0,12); const src = job.sources.find(s=>s.platform===p);
+    return `<section class="pcard"><div class="pcard-h">${logo(p,"big")}<div><h2>${esc(PLAT[p].name)}</h2><div class="src2">${esc(src?.label||PLAT[p].src)}</div></div><span class="cnt">${list.length}</span></div><ol class="rows">${shown.map((i,idx)=>rowHTML(i,idx+1)).join("")}</ol>${list.length>12?`<button class="more" data-more="p:${p}">${all?"Show top 12":"Show all "+list.length}</button>`:""}${src?`<div class="pnote">via ${esc(src.actor)}</div>`:""}</section>`; }).join("")}</div>${!order.length?`<div class="empty"><b>Nothing here yet</b>${job.status==="running"?"Results arrive as each platform finishes.":"Nothing matches these filters."}</div>`:""}`;
+}
+function rowHTML(i, pos) {
+  const meta = [];
+  if (i.metric) meta.push(`<span class="m">${fmt(i.metric)} ${esc(i.metric_label)}</span>`);
+  if (i.growth) meta.push(`<span class="g">+${i.growth>=1000?"1,000%+":i.growth+"%"}</span>`);
+  if (i.direction) meta.push(`<span class="${i.direction==="up"?"g":""}">${i.direction==="up"?"▲ rising":"▼ fading"}</span>`);
+  if (i.likes) meta.push(`<span>${fmt(i.likes)} likes</span>`); if (i.comments) meta.push(`<span>${fmt(i.comments)} comments</span>`); if (i.reposts) meta.push(`<span>${fmt(i.reposts)} reposts</span>`); if (i.posts) meta.push(`<span>${fmt(i.posts)} posts</span>`);
+  if (i.extra) meta.push(`<span>${esc(i.extra)}</span>`); if (i.age_h != null) meta.push(`<span>${ago(i.age_h)} ago</span>`);
+  if (i.related?.length) meta.push(`<span>↳ ${esc(i.related.slice(0,2).join(", "))}</span>`);
+  meta.push(tag(i.category,"cat")); if (i.safety!=="safe") meta.push(safetyTag(i.safety)); if (i.offtopic) meta.push(tag("off-topic"));
+  return `<li class="row${i.offtopic?" off":""}"><span class="rk">${String(pos).padStart(2,"0")}</span><div class="t"><a href="${esc(i.url)}" target="_blank" rel="noopener">${esc(i.topic)}</a><div class="meta">${meta.join("")}</div>${i.curve?`<div style="margin-top:4px">${spark(i.curve,i.direction)}</div>`:""}</div>${pinBtn("it:"+job.id+":"+i.id)}</li>`;
+}
+function renderTable() {
+  const its = visibleItems(); const {k,d} = state.sort;
+  const val = (i,key) => key==="platform"?PLAT[i.platform].name : key==="age"?(i.age_h??1e9) : key==="metric"?(i.metric??-1) : (i[key]??"");
+  const rows = its.slice().sort((a,b)=>{const x=val(a,k),y=val(b,k); return (typeof x==="number"?x-y:String(x).localeCompare(String(y)))*d;});
+  const cols = [["score","Score"],["topic","Result"],["platform","Platform"],["category","Category"],["metric","Metric"],["momentum","Momentum"],["age","Age"],["safety","Safety"]];
+  return filtersHTML({platforms:true}) + `<div class="tbar"><span class="sub">${rows.length} rows · click a header to sort</span><button class="btn" id="csv">Copy as TSV</button></div><div class="tblwrap"><table><thead><tr>${cols.map(([key,l])=>`<th data-k="${key}" ${k===key?`aria-sort="${d>0?"ascending":"descending"}"`:""}>${l}</th>`).join("")}</tr></thead><tbody>${rows.map(i=>`<tr><td class="num">${i.score}</td><td><a href="${esc(i.url)}" target="_blank" rel="noopener">${esc(i.topic)}</a>${i.extra?`<div style="font:500 11px var(--f-mono);color:var(--muted)">${esc(i.extra)}</div>`:""}</td><td>${logo(i.platform,"xs")} ${esc(PLAT[i.platform].name)}</td><td>${esc(i.category)}</td><td class="num">${i.metric?fmt(i.metric)+" "+esc(i.metric_label):"rank "+i.rank}</td><td class="num">${i.momentum}</td><td class="num">${ago(i.age_h)}</td><td>${safetyTag(i.safety)}</td></tr>`).join("")}</tbody></table></div>`;
+}
+function renderSources() {
+  return `<div class="sec-h" style="padding-top:14px"><h2>Sources &amp; method</h2><span class="sub">what ran for this research</span></div>
+  <div class="srcs">${job.sources.map(s=>`<div class="srcbox"><div class="h">${logo(s.platform)}${esc(PLAT[s.platform].name)}<span style="margin-left:auto;font:500 12px var(--f-mono);color:${s.status==="done"?"var(--accent-ink)":"var(--crit)"}">${s.status==="done"?s.count+" rows":s.status}</span></div><dl><dt>Query</dt><dd>${esc(s.label)}</dd><dt>Actor</dt><dd><code>${esc(s.actor)}</code></dd>${s.error?`<dt>Error</dt><dd>${esc(s.error)}</dd>`:""}${s.finished_at?`<dt>Took</dt><dd>${Math.round((new Date(s.finished_at)-new Date(s.started_at))/1000)}s</dd>`:""}</dl></div>`).join("")}</div>
+  <div class="prose"><h2>How the score works</h2><p>Every result gets 0–100 from <b>reach</b> (rank inside its own platform), <b>momentum</b> (how fresh it is, Google growth %, TikTok trend direction, Pinterest week-over-week) and a small platform weight. A signal adds <b>breadth</b> (+12 per extra platform, +4 for a second region) and a volume bonus for very large numbers, then subtracts 25 for <i>caution</i> and 60 for <i>avoid</i>.</p>
+  <h2>The AI layer</h2><p>When all sources are in, the results are sent to a language model (via OpenRouter) that groups them into signals, drops off-topic noise, writes the "why now" with numbers, proposes content angles and flags brand safety. It sees only titles, captions, metrics and ages, never full pages.</p>
+  <h2>Limits</h2><p>Topic mode searches each platform for your words, so a vague topic returns vague results; add a brand or a place to sharpen it. TikTok and Instagram date filters are approximate. X hides volumes for trends. Costs: about $0.30–0.60 in Apify credits per research plus a few cents of model usage.</p></div>`;
+}
+function bindJob() {
+  const m = $("#main");
+  m.querySelector("#share")?.addEventListener("click", () => copyText(location.origin + "/r/" + job.id, "Link copied"));
+  m.querySelector("#rerun")?.addEventListener("click", () => { form = { mode: job.mode, topic: job.mode==="topic"?job.topic:"", region: job.region, windowH: job.windowH, plats: new Set(job.platforms) }; stopPolling(); job = null; go("/"); });
+  m.querySelector("#retry-brain")?.addEventListener("click", async () => { try { const r = await api("/api/job?id="+job.id+"&retry=brain"); job = r.job; renderJob(); schedulePoll(); } catch(e) { toast(e.message); } });
+  m.querySelectorAll("[data-next]").forEach(b => b.addEventListener("click", () => { form = { mode:"topic", topic:b.dataset.next, region:job.region, windowH:job.windowH, plats:new Set(TOPIC_PLATS) }; stopPolling(); job = null; go("/"); setTimeout(startResearch, 50); }));
+  m.querySelector("#q")?.addEventListener("input", e => { state.q = e.target.value; clearTimeout(bindJob.t); bindJob.t = setTimeout(() => { const pos = e.target.selectionStart; renderJob(); const q=$("#q"); if(q){q.focus(); try{q.setSelectionRange(pos,pos);}catch{}} }, 150); });
+  m.querySelector("#safe")?.addEventListener("change", e => { state.safeOnly = e.target.checked; renderJob(); });
+  m.querySelector("#showoff")?.addEventListener("change", e => { state.showOff = e.target.checked; renderJob(); });
+  m.querySelectorAll("[data-cat]").forEach(b => b.addEventListener("click", () => { const c=b.dataset.cat; state.cats.has(c)?state.cats.delete(c):state.cats.add(c); renderJob(); }));
+  m.querySelectorAll("[data-fplat]").forEach(b => b.addEventListener("click", () => { const p=b.dataset.fplat; state.plats.has(p)?state.plats.delete(p):state.plats.add(p); renderJob(); }));
+  m.querySelectorAll("[data-more]").forEach(b => b.addEventListener("click", () => { const k=b.dataset.more; state.expanded.has(k)?state.expanded.delete(k):state.expanded.add(k); renderJob(); }));
+  m.querySelectorAll("details[data-x]").forEach(d => d.addEventListener("toggle", () => { d.open?state.expanded.add(d.dataset.x):state.expanded.delete(d.dataset.x); }));
+  m.querySelectorAll("th[data-k]").forEach(th => th.addEventListener("click", () => { const key=th.dataset.k; state.sort = { k:key, d: state.sort.k===key ? -state.sort.d : (["topic","platform","category","safety"].includes(key)?1:-1) }; renderJob(); }));
+  m.querySelector("#csv")?.addEventListener("click", () => { const rows = visibleItems(); copyText(["Score\tResult\tPlatform\tCategory\tMetric\tMomentum\tAge(h)\tSafety\tURL", ...rows.map(i=>[i.score,i.topic,PLAT[i.platform].name,i.category,i.metric?`${i.metric} ${i.metric_label}`:`rank ${i.rank}`,i.momentum,i.age_h??"",i.safety,i.url].join("\t"))].join("\n")); });
+}
+
+/* ---------- shortlist ---------- */
+document.addEventListener("click", e => {
+  const pb = e.target.closest("[data-pin]"); if (!pb || !job) return;
+  const id = pb.dataset.pin;
+  if (pins.some(p => p.id === id)) { pins = pins.filter(p => p.id !== id); toast("Removed from shortlist"); }
+  else {
+    let p = null;
+    if (id.startsWith("sig:")) { const c = job.clusters.find(c => "sig:"+job.id+":"+c.id === id); if (c) p = { id, kind:"signal", title:c.name, topic:job.topic, category:c.category, safety:c.safety, score:c.score, platforms:c.platforms, why:c.why, angles:c.angles, formats:c.formats, url:c.evidence[0]?.url||"", note:"", created_at:new Date().toISOString(), job:job.id }; }
+    else { const it = job.items.find(i => "it:"+job.id+":"+i.id === id); if (it) p = { id, kind:"result", title:it.topic, topic:job.topic, category:it.category, safety:it.safety, score:it.score, platforms:[it.platform], why:`${PLAT[it.platform].name}${it.metric?` · ${fmt(it.metric)} ${it.metric_label}`:""}${it.extra?` · ${it.extra}`:""}`, angles:[], formats:[], url:it.url, note:"", created_at:new Date().toISOString(), job:job.id }; }
+    if (p) { pins.unshift(p); toast("Added to shortlist"); }
+  }
+  savePins(); document.querySelectorAll("[data-pin]").forEach(b => b.setAttribute("aria-pressed", pins.some(p => p.id === b.dataset.pin))); renderDrawer();
+});
+function briefText(p) { return [`TREND BRIEF — ${p.title}`, `Research: ${p.topic} · Category: ${p.category} · Brand safety: ${p.safety} · Score: ${p.score}/100`, `Platforms: ${(p.platforms||[]).map(x=>PLAT[x]?.name||x).join(", ")}`, p.why?`Why now: ${p.why}`:"", p.angles?.length?`Angles:\n${p.angles.map(a=>"  • "+a).join("\n")}`:"", p.formats?.length?`Formats: ${p.formats.join(", ")}`:"", p.url?`Source: ${p.url}`:"", p.note?`Notes: ${p.note}`:"", `Link: ${location.origin}/r/${p.job}`].filter(Boolean).join("\n"); }
+function renderDrawer() {
+  $("#drawer-body").innerHTML = pins.length ? pins.map(p => `<div class="card"><div class="meta">${(p.platforms||[]).map(x=>logo(x,"xs")).join("")}${tag(p.category,"cat")}${safetyTag(p.safety)}<span class="tag">score ${p.score}</span></div><h4>${p.url?`<a href="${esc(p.url)}" target="_blank" rel="noopener" style="text-decoration:none">${esc(p.title)}</a>`:esc(p.title)}</h4><div style="font-size:12px;color:var(--muted)">from “${esc(p.topic)}”</div>${p.why?`<div style="font-size:12.5px;color:var(--ink-2)">${esc(p.why)}</div>`:""}<textarea data-note="${esc(p.id)}" placeholder="Notes: client, owner, deadline…">${esc(p.note||"")}</textarea><div class="acts"><button class="btn" data-brief="${esc(p.id)}">Copy brief</button><button class="btn ghost" data-unpin="${esc(p.id)}">Remove</button></div></div>`).join("") : `<div class="empty"><b>Nothing shortlisted</b>Star any signal or result to keep it here. The shortlist is saved in this browser.</div>`;
+}
+$("#drawer-body").addEventListener("click", e => { const u=e.target.closest("[data-unpin]"); if(u){ pins=pins.filter(p=>p.id!==u.dataset.unpin); savePins(); renderDrawer(); document.querySelectorAll("[data-pin]").forEach(b=>b.setAttribute("aria-pressed",pins.some(p=>p.id===b.dataset.pin))); return; } const b=e.target.closest("[data-brief]"); if(b){ const p=pins.find(x=>x.id===b.dataset.brief); if(p) copyText(briefText(p)); } });
+$("#drawer-body").addEventListener("input", e => { const n=e.target.closest("[data-note]"); if(!n) return; const p=pins.find(x=>x.id===n.dataset.note); if(p){ p.note=n.value; savePins(); } });
+$("#shortlist-btn").addEventListener("click", () => { renderDrawer(); $("#drawer").classList.toggle("open"); });
+$("#drawer-close").addEventListener("click", () => $("#drawer").classList.remove("open"));
+$("#copy-all").addEventListener("click", () => copyText(pins.map(briefText).join("\n\n---\n\n")));
+savePins();
+
+/* ---------- settings modal ---------- */
+$("#settings-btn").addEventListener("click", async () => {
+  try { health = await api("/api/health"); } catch {}
+  const box = document.createElement("div"); box.className = "modal"; box.innerHTML = `<div class="box" role="dialog" aria-label="Settings">
+    <h3>Settings</h3>
+    <div class="help">${health?.server_keys ? `This site has shared keys${health.access_code?" protected by an access code":""}. You can still use your own keys below; they stay in this browser only.` : "This site has no shared keys. Add your own Apify token (required) and OpenRouter key (for the AI analysis)."}</div>
+    ${health?.access_code?`<label>Access code<input id="s-code" type="password" value="${esc(settings.code||"")}" placeholder="given by the site owner"></label>`:""}
+    <fieldset><legend>Your own keys (optional)</legend>
+      <label>Apify API token<input id="s-apify" type="password" value="${esc(settings.apify||"")}" placeholder="apify_api_…"><span class="help">console.apify.com → Settings → API &amp; Integrations. Research results are saved to your Apify account.</span></label>
+      <label>OpenRouter API key<input id="s-or" type="password" value="${esc(settings.openrouter||"")}" placeholder="sk-or-v1-…"><span class="help">openrouter.ai → Keys. Needed for signals, angles and summaries.</span></label>
+      <label>Model<input id="s-model" type="text" value="${esc(settings.model||"")}" placeholder="${esc(health?.model||"anthropic/claude-sonnet-4.5")}"><span class="help">Any OpenRouter model id. Leave empty for the default.</span></label>
+    </fieldset>
+    <div style="display:flex;gap:8px;justify-content:flex-end"><button class="btn" id="s-cancel">Cancel</button><button class="btn primary" id="s-save">Save</button></div></div>`;
+  document.body.appendChild(box);
+  box.querySelector("#s-cancel").addEventListener("click", () => box.remove());
+  box.addEventListener("click", e => { if (e.target === box) box.remove(); });
+  box.querySelector("#s-save").addEventListener("click", () => { settings = { code: box.querySelector("#s-code")?.value.trim()||"", apify: box.querySelector("#s-apify").value.trim(), openrouter: box.querySelector("#s-or").value.trim(), model: box.querySelector("#s-model").value.trim() }; saveSettings(); box.remove(); toast("Settings saved"); if (!job) renderHome(); });
+});
+
+/* ---------- utils ---------- */
+function copyText(t, msg="Copied") { const done = () => toast(msg); try { navigator.clipboard.writeText(t).then(done).catch(() => fallbackCopy(t)); } catch { fallbackCopy(t); } }
+function fallbackCopy(t) { const ta=document.createElement("textarea"); ta.value=t; ta.style.position="fixed"; ta.style.opacity="0"; document.body.appendChild(ta); ta.select(); try{document.execCommand("copy"); toast("Copied");}catch{toast("Select and copy manually");} ta.remove(); }
+let toastEl; function toast(msg) { toastEl?.remove(); toastEl=document.createElement("div"); toastEl.className="toast"; toastEl.textContent=msg; document.body.appendChild(toastEl); setTimeout(()=>toastEl?.remove(),1800); }
+
+route();
+</script>
+</body>
+</html>

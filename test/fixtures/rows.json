@@ -1,0 +1,59 @@
+{
+  "data_xplorer/google-news-scraper-fast": [
+    {"title":"Why AI, Automation, & Data Are Critical for Manufacturers - Design News","url":"https://news.google.com/rss/articles/CBMixAFBVV95cUxQaUxvRkdJRFkw?oc=5","source":"Design News","publishedAt":"__NOW-3h__"},
+    {"title":"EliseAI raises $350M to enhance its AI work automation suite - siliconangle.com","url":"https://news.google.com/rss/articles/CBMinAFBVV95cUxQVXQ4Q3R1?oc=5","source":"siliconangle.com","publishedAt":"__NOW-11h__"},
+    {"title":"EliseAI raises $350M at $4B valuation to expand healthcare AI automation - MobiHealthNews","url":"https://news.google.com/rss/articles/CBMiogFBVV95cUxQRk84?oc=5","source":"MobiHealthNews","publishedAt":"__NOW-17h__"}
+  ],
+  "orbots/google-trends-scraper": [
+    {"type":"interest_over_time","keyword":"AI automation","date":"Sep 23, 2026 at 10:00 AM","timestamp":1790757000,"value":46,"is_partial":false},
+    {"type":"interest_over_time","keyword":"AI automation","date":"Sep 23, 2026 at 11:00 AM","timestamp":1790760600,"value":31,"is_partial":false},
+    {"type":"interest_over_time","keyword":"AI automation","date":"Sep 23, 2026 at 12:00 PM","timestamp":1790764200,"value":27,"is_partial":false},
+    {"type":"interest_over_time","keyword":"AI automation","date":"Sep 23, 2026 at 1:00 PM","timestamp":1790767800,"value":63,"is_partial":false},
+    {"type":"interest_over_time","keyword":"AI automation","date":"Sep 23, 2026 at 2:00 PM","timestamp":1790771400,"value":100,"is_partial":true}
+  ],
+  "orbots/google-trends-scraper#trending": [
+    {"type":"trending","term":"wnba playoffs","rank":1,"search_volume":5000000,"growth":1000,"category":"Sports","started_at":"__NOW-9h-unix__","is_active":true,"related_terms":["aces vs fever","wnba"]},
+    {"type":"trending","term":"dots","rank":2,"search_volume":20000,"growth":800,"category":"Science","started_at":"__NOW-5h-unix__","is_active":true,"related_terms":["openai dots"]}
+  ],
+  "harshmaur/reddit-scraper": [
+    {"dataType":"post","title":"Bangalore's AI traffic cameras have officially lost the plot. My friend's guitar just got a ticket for not wearing a helmet.","postUrl":"https://www.reddit.com/r/bangalore/comments/1wqqgo2/x/","upVotes":5932,"commentsCount":158,"communityName":"r/bangalore","createdAt":"__NOW-20h__","over18":false},
+    {"dataType":"post","title":"Interviewed candidates for AI engineer roles this week, my god is this really where our industry is going?","postUrl":"https://www.reddit.com/r/ExperiencedDevs/comments/1wql3g2/x/","upVotes":1402,"commentsCount":876,"communityName":"r/ExperiencedDevs","createdAt":"__NOW-6h__","over18":false},
+    {"dataType":"post","title":"AI and automated bots now account for the majority of all global web traffic","postUrl":"https://www.reddit.com/r/dankmemes/comments/1wtijqf/x/","upVotes":1363,"commentsCount":86,"communityName":"r/dankmemes","createdAt":"__NOW-2h__","over18":false},
+    {"dataType":"post","title":"NSFW thing","postUrl":"https://www.reddit.com/r/x/comments/zzz/x/","upVotes":9999,"commentsCount":1,"communityName":"r/x","createdAt":"__NOW-1h__","over18":true}
+  ],
+  "streamers/youtube-scraper": [
+    {"title":"I Tested Sonnet 5.5 vs Opus 5.5. What You Need to Know.","url":"https://www.youtube.com/watch?v=7eo-11K2e3c","viewCount":122292,"date":"__NOW-10h__","likes":1100,"channelName":"Nate Herk | AI Automation","duration":"00:25:48","commentsCount":126,"type":"video"},
+    {"title":"Opus 5.5: How Close Are We to Automated AI Research?","url":"https://www.youtube.com/watch?v=R9momwXV9w4","viewCount":269650,"date":"__NOW-40h__","likes":4300,"channelName":"AI Explained","duration":"00:32:54","commentsCount":760,"type":"video"},
+    {"title":"Top 5 AI Tools That Are Replacing Jobs","url":"https://www.youtube.com/watch?v=C1ihzNbeqpE","viewCount":52647,"date":"__NOW-14h__","likes":824,"channelName":"BoomAI","duration":"00:06:43","commentsCount":114,"type":"video"}
+  ],
+  "akash9078/youtube-trending-scraper": [
+    {"title":"Taylor Swift - Patient Zero (Official Music Video)","video_url":"https://www.youtube.com/watch?v=mw3kSNIxjqo","channel_title":"Taylor Swift","published_at":"__NOW-11h__","view_count":1975531,"like_count":129348,"comment_count":7365,"duration":"5:13"}
+  ],
+  "apidojo/tweet-scraper": [
+    {"text":"🚨 Your “AI agent” is probably just a chatbot with a fancy name.\n\nA real Claude agent needs more than a prompt.","url":"https://x.com/Origin_AI_01/status/2104877229868208508","createdAt":"Tue Sep 29 10:13:32 +0000 2026","viewCount":22858,"likeCount":100,"retweetCount":35,"replyCount":18,"author":{"userName":"Origin_AI_01","followers":10499},"isRetweet":false,"lang":"en"},
+    {"text":"Stanford AI engineering course: Anyone can build an AI agent in 60 minutes","url":"https://x.com/supremaxbt/status/2104946833520771448","createdAt":"Tue Sep 29 14:50:07 +0000 2026","viewCount":24284,"likeCount":266,"retweetCount":55,"replyCount":8,"author":{"userName":"supremaxbt","followers":543},"isRetweet":false,"lang":"en"},
+    {"text":"RT: something","url":"https://x.com/a/status/1","createdAt":"Tue Sep 29 14:50:07 +0000 2026","viewCount":1,"likeCount":0,"retweetCount":0,"replyCount":0,"author":{"userName":"a","followers":1},"isRetweet":true,"lang":"en"}
+  ],
+  "automation-lab/twitter-trends-scraper": [
+    {"rank":1,"name":"Good Wednesday","isPromoted":false},{"rank":2,"name":"Cubs","isPromoted":false},{"rank":3,"name":"#Ad","isPromoted":true}
+  ],
+  "clockworks/tiktok-scraper": [
+    {"text":"Xây tự động hoá 100% với tool mã nguồn mở này!","webVideoUrl":"https://www.tiktok.com/@tongtaiai.com/video/7690052152558947636","createTimeISO":"__NOW-8h__","playCount":5141,"diggCount":121,"commentCount":1,"shareCount":4,"authorMeta":{"name":"tongtaiai.com","fans":9823},"isAd":false,"textLanguage":"vi"},
+    {"text":"for all the dummies out there.. I gotchu #wifimoney #aiautomation #losangeles","webVideoUrl":"https://www.tiktok.com/@creativewandie/video/7691103446216314133","createTimeISO":"__NOW-4h__","playCount":9897,"diggCount":428,"commentCount":49,"shareCount":65,"authorMeta":{"name":"creativewandie","fans":7095},"isAd":false,"textLanguage":"en"},
+    {"text":"#babyshows #youtubeshorts #startmakingmoney #YouTubeautomation #sidehustle","webVideoUrl":"https://www.tiktok.com/@little.content.co/video/7689888591954087199","createTimeISO":"__NOW-19h__","playCount":327515,"diggCount":17469,"commentCount":2294,"shareCount":8333,"authorMeta":{"name":"little.content.co","fans":7566},"isAd":false,"textLanguage":"un"}
+  ],
+  "data_xplorer/tiktok-trends": [
+    {"Rank":1,"Hashtag":"#citytastetest","Posts":805308,"Video Views":666868302,"Trend Direction":"up","Industries":[],"Trend Data":[{"value":0},{"value":89},{"value":99},{"value":98},{"value":98},{"value":99},{"value":100}]}
+  ],
+  "apify/instagram-hashtag-scraper": [
+    {"caption":"Earn With AI Agents 🤖💰\n\nBuild AI agents, automate real business tasks","url":"https://www.instagram.com/p/Ddv3LQfyJJB/","timestamp":"__NOW-15h__","likesCount":44,"commentsCount":6,"videoPlayCount":1274,"ownerUsername":"jayanttechh","type":"Video"},
+    {"caption":"Met the man behind my GPU bill and tried to act normal 🫠 #JensenHuang #NVIDIA #ai","url":"https://www.instagram.com/p/Dd1g1jsxrE9/","timestamp":"__NOW-9h__","likesCount":524,"commentsCount":8,"videoPlayCount":34707,"ownerUsername":"tech.unicorn","type":"Video"}
+  ],
+  "khadinakbar/instagram-trending-reels-scraper": [
+    {"trendingFeedPosition":1,"caption":"The only person that should feel triggered here is the barista","creatorUsername":"drleephillips","likeCount":62216,"commentCount":3769,"postedAt":"__NOW-20h__","shortcode":"Dd1VUstkZc4"}
+  ],
+  "steadyfetch/social-trends-scraper": [
+    {"rank":1,"title":"3 screen wallpaper","url":"https://www.pinterest.com/search/pins/?q=3%20screen%20wallpaper","platform":"pinterest","metricValue":52,"details":{"wowChange":{"value":1},"momChange":{"value":100.01}},"status":"ok"},
+    {"rank":null,"title":null,"url":null,"platform":null,"metricValue":null,"status":"stopped_at_limit"}
+  ]
+}
