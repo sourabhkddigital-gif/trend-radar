@@ -353,7 +353,7 @@ async function renderHome() {
 
   try { health = health || await api("/api/health"); } catch {}
   if (health && !health.server_keys && !settings.apify) $("#home-note").innerHTML = `<div class="note">This deployment has no shared Apify token. Open <b>Settings</b> (⚙) and add your own Apify token and OpenRouter key to run research.</div>`;
-  else if (health?.access_code && !settings.code && !settings.apify) $("#home-note").innerHTML = `<div class="note">This site needs an access code. Open <b>Settings</b> (⚙) and enter it once.</div>`;
+  else if (health?.access_code && !settings.code && !settings.apify) $("#home-note").innerHTML = `<div class="note">Anyone can open shared results. To <b>start</b> a research you need the site's access code: open <b>Settings</b> (⚙) and enter it once.</div>`;
   loadRecent();
 }
 async function loadRecent() {
