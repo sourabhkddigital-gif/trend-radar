@@ -11,7 +11,7 @@ export default async function handler(req, res) {
     if (!req.headers["x-apify-token"] && limited(ip)) return send(res, 429, { error: "Too many research runs from this connection. Try again in a few minutes, or add your own Apify token in Settings." });
     const keys = resolveKeys(req.headers, { spend: true });
     const body = typeof req.body === "string" ? JSON.parse(req.body || "{}") : (req.body || {});
-    const { job, reused } = await createJob(keys, body);
+    const { job, reused } = await createJob(keys, { ...body, ip });
     send(res, reused ? 200 : 201, { job, reused });
   });
 }
