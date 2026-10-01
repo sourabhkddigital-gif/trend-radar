@@ -23,8 +23,8 @@ Every research run gets a shareable link (`/r/<id>`). Results are stored in your
    | `OPENROUTER_API_KEY` | recommended | Signals, angles, summaries. Without it you get raw results only |
    | `OPENROUTER_MODEL` | no | Default `anthropic/claude-sonnet-4.5`. Any OpenRouter model id |
    | `ACCESS_CODE` | no | Leave unset for an **open site** — anyone with the URL can search, and the two limits below cap what it can cost you. If set, starting a research needs the code (viewing is always open); share `https://your-site/?k=<code>` as an invite link that saves it silently |
-   | `DAILY_LIMIT` | no | Max researches per rolling 24 h on the shared keys, all visitors combined (default 40; 0 = unlimited) |
-   | `IP_DAILY_LIMIT` | no | Max researches per visitor (hashed IP) per rolling 24 h (default 8; 0 = unlimited) |
+   | `DAILY_LIMIT` | no | Max researches per rolling 24 h on the shared keys, all visitors combined (default 0 = unlimited) |
+   | `IP_DAILY_LIMIT` | no | Max researches per visitor (hashed IP) per rolling 24 h (default 0 = unlimited) |
    | `REUSE_HOURS` | no | Same topic/region/window asked again within N hours reuses the existing research instead of paying twice (default 2) |
    | `KV_STORE_NAME` | no | Apify key-value store name for saved results (default `trend-radar-jobs`) |
    | `APP_NAME` | no | Display name |
