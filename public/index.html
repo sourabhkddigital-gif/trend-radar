@@ -189,6 +189,17 @@ a.ext{text-decoration:none} a.ext::after{content:"↗";font:600 10px var(--f-mon
 .ev li{display:grid;grid-template-columns:18px minmax(0,1fr) auto;gap:8px;align-items:center;font-size:12.5px}
 .ev a{color:var(--ink);text-decoration:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap} .ev a:hover{color:var(--accent);text-decoration:underline}
 .ev .m{font:500 11.5px var(--f-mono);color:var(--muted);white-space:nowrap}
+.ev.top{margin:0;padding:0 0 2px} .ev.top a{font-weight:600}
+.srcs-h{font:600 11px/1 var(--f-mono);text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-top:2px}
+.sig h3 a{color:inherit;text-decoration:none} .sig h3 a:hover{color:var(--accent);text-decoration:underline}
+.plist .t a{color:var(--ink);font-weight:600} .plist .t a:hover{color:var(--accent);text-decoration:underline}
+.kpi .s .jump{color:var(--accent-ink);font-weight:600;text-decoration:none} .kpi .s .jump:hover{text-decoration:underline}
+.tag.sig{background:var(--accent-soft);color:var(--accent-ink)}
+/* all results list under the signals */
+.allres{margin-top:26px} .allres .sec-h h2 .cnt{font:500 14px var(--f-mono);color:var(--muted);margin-left:6px;vertical-align:middle}
+.flatbox{background:var(--surface);border:1px solid var(--line);border-radius:16px;overflow:hidden}
+.flatbox .row{padding:10px 16px} .flatbox .row .t a{font-size:14.5px}
+.row .meta .pl{display:inline-flex;align-items:center;gap:5px;color:var(--ink-2);font-weight:600}
 .rail{display:grid;gap:14px}
 .panel{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px 16px}
 .panel h3{font:400 20px/1.1 var(--f-display);margin-bottom:10px} .panel .hint{font-size:12px;color:var(--muted);margin:-6px 0 10px}
@@ -551,30 +562,42 @@ function renderRadar() {
   const catRows = CAT_ORDER.filter(c=>catCounts[c]).map(c=>[c,catCounts[c]]); const catMax = Math.max(1, ...catRows.map(r=>r[1]));
   const byPlat = {}; its.forEach(i => (byPlat[i.platform] ||= []).push(i));
   const tt = its.filter(i => i.curve).sort((a,b)=>(b.direction==="up")-(a.direction==="up")||b.metric-a.metric).slice(0,6);
+  const inSignals = new Set(cl.flatMap(c => c.evidence.map(e => e.id))); const grouped = its.filter(i => i.cluster).length;
+  const ranked = its.slice().sort((a,b) => (b.score - a.score) || ((a.age_h ?? 1e9) - (b.age_h ?? 1e9)));
+  const showN = state.allN || 40, shown = ranked.slice(0, showN);
+  const topSig = cl[0], topEv = topSig?.evidence?.[0];
   return filtersHTML() + `
   <div class="kpis">
-    <div class="kpi"><span class="l">Results</span><span class="v">${its.length}<small>of ${items().length}</small></span><span class="s">${job.sources.filter(s=>s.status==="done").length} platforms returned data</span></div>
-    <div class="kpi"><span class="l">Signals</span><span class="v">${cl.length}</span><span class="s">${cross} seen on 2+ platforms</span></div>
+    <div class="kpi"><span class="l">Results</span><span class="v">${its.length}<small>of ${items().length}</small></span><span class="s">${job.sources.filter(s=>s.status==="done").length} platforms returned data · <a href="#all-results" class="jump">all listed below</a></span></div>
+    <div class="kpi"><span class="l">Signals</span><span class="v">${cl.length}</span><span class="s">${job.brain?.status==="done"?`${grouped} of the results grouped into ${cl.length} stor${cl.length===1?"y":"ies"}${job.stats?.offtopic?` · ${job.stats.offtopic} ${job.brief?"outside the focus":"off-topic"}`:""}`:`${cross} seen on 2+ platforms`}</span></div>
     <div class="kpi flare"><span class="l">Fresh</span><span class="v">${rising}</span><span class="s">results with strong momentum</span></div>
-    <div class="kpi"><span class="l">Top signal</span><span class="v" style="font-size:20px;line-height:1.15">${cl[0]?esc(cl[0].name.split(":")[0]):"—"}</span><span class="s">${cl[0]?`score ${cl[0].score} · ${cl[0].platforms.length} platforms`:job.status==="running"?"waiting for analysis":"no signals"}</span></div>
+    <div class="kpi"><span class="l">Top signal</span><span class="v" style="font-size:20px;line-height:1.15">${topSig?`<a class="ext" href="${esc(linkOf(topEv))}" target="_blank" rel="noopener" title="${esc(openTitle(topEv))}" style="color:inherit;text-decoration:none">${esc(topSig.name.split(":")[0])}</a>`:"—"}</span><span class="s">${topSig?`score ${topSig.score} · ${topSig.platforms.length} platforms`:job.status==="running"?"waiting for analysis":"no signals"}</span></div>
     ${safePct!=null?`<div class="kpi"><span class="l">Brand-safe</span><span class="v">${safePct}<small>%</small></span><span class="s">of signals cleared for brand use</span></div>`:""}
   </div>
   <div class="radar"><section>
-    <div class="sec-h"><h2>Signals</h2><span class="sub">ranked by reach × breadth × momentum, brand safety applied</span></div>
-    ${cl.length ? `<div class="sigs">${cl.map(sigCard).join("")}</div>` : job.status==="running" ? `<div class="empty"><b>Collecting…</b>Signals appear when every platform has answered and the AI has grouped the results.</div>` : `<div class="empty"><b>No signals</b>${job.brain?.status==="skipped"||job.brain?.status==="failed"?"Add an OpenRouter key in Settings and press “Analyse with AI”, or browse the raw results under Platforms.":"Nothing matches these filters."}</div>`}
+    <div class="sec-h"><h2>Signals</h2><span class="sub">the AI groups the results into stories · ranked by reach × breadth × momentum · click a headline or source to open it</span></div>
+    ${cl.length ? `<div class="sigs">${cl.map(sigCard).join("")}</div>` : job.status==="running" ? `<div class="empty"><b>Collecting…</b>Signals appear when every platform has answered and the AI has grouped the results.</div>` : `<div class="empty"><b>No signals</b>${job.brain?.status==="skipped"||job.brain?.status==="failed"?"Add an OpenRouter key in Settings and press “Analyse with AI”. Every result is still listed below.":"Nothing matches these filters."}</div>`}
+    ${job.brief && job.stats?.offtopic && job.brain?.status==="done" ? `<p class="hint" style="margin:12px 0 0">Signals are built only from results that match your focus; the ${job.stats.offtopic} results outside it are ${state.showOff?"included":"hidden"} in the list below${state.showOff?"":" (tick “Show … outside the focus” to include them)"}.</p>`:""}
   </section><aside class="rail">
     ${job.series?`<div class="panel"><h3>Search interest</h3><p class="hint">${esc(job.series.label)} · Google Trends, 0–100</p>${seriesChart(job.series)}<p class="hint" style="margin:8px 0 0"><a class="ext" href="${esc(trendsUrl(job.topic, job.region, job.windowH))}" target="_blank" rel="noopener" style="color:var(--accent-ink);font-weight:600">Open in Google Trends</a></p></div>`:""}
     <div class="panel"><h3>Category mix</h3><p class="hint">Results per category</p><div class="bars">${catRows.map(([c,n])=>`<div class="bar" title="${esc(c)}: ${n} (${Math.round(100*n/Math.max(its.length,1))}%)"><span class="lbl">${esc(c)}</span><span class="trk"><span class="fill" style="width:${(100*n/catMax).toFixed(1)}%"></span></span><span class="val">${n}</span></div>`).join("")||`<span class="hint">No results yet</span>`}</div></div>
     ${tt.length?`<div class="panel"><h3>TikTok momentum</h3><p class="hint">7-day interest curves</p><ul class="plist">${tt.map(i=>`<li>${logo("tiktok")}<div class="t"><a class="ext" href="${esc(linkOf(i))}" target="_blank" rel="noopener" title="${esc(openTitle(i))}">${esc(i.topic)}</a><small>${fmt(i.metric)} views · ${i.direction}</small></div>${spark(i.curve,i.direction)}</li>`).join("")}</ul></div>`:""}
     <div class="panel"><h3>Leader per platform</h3><ul class="plist">${Object.keys(PLAT).filter(p=>byPlat[p]).map(p=>{const i=byPlat[p].sort((a,b)=>a.rank-b.rank)[0]; return `<li>${logo(p)}<div class="t"><a class="ext" href="${esc(linkOf(i))}" target="_blank" rel="noopener" title="${esc(openTitle(i))}">${esc(i.topic)}</a><small>${esc(PLAT[p].name)}${i.metric?` · ${fmt(i.metric)} ${esc(i.metric_label)}`:""}</small></div><span class="n">${byPlat[p].length}</span></li>`;}).join("")||`<li class="hint">No results yet</li>`}</ul></div>
-  </aside></div>`;
+  </aside></div>
+  <section class="allres" id="all-results">
+    <div class="sec-h"><h2>All results <span class="cnt">${its.length}</span></h2><span class="sub">every item the platforms returned${job.status==="running"?" so far":""}, highest score first · click a headline to open it on its platform</span></div>
+    ${its.length ? `<div class="flatbox"><ol class="rows">${shown.map((i,idx)=>rowHTML(i,idx+1,{plat:true,inSig:inSignals.has(i.id)})).join("")}</ol>${ranked.length>showN?`<button class="more" data-alln="${showN+60}">Show ${Math.min(60, ranked.length-showN)} more (${ranked.length-showN} left)</button>`:showN>40&&ranked.length>40?`<button class="more" data-alln="40">Show fewer</button>`:""}</div>` : `<div class="empty"><b>${job.status==="running"?"Collecting…":"No results"}</b>${job.status==="running"?"Results appear here as each platform finishes.":"Nothing matches these filters."}</div>`}
+  </section>`;
 }
 function sigCard(c) {
   const hot = c.momentum >= 18 && c.score >= 75; const open = state.expanded.has(c.id);
-  return `<article class="sig ${c.safety}"><div class="sig-top">${ring(c.score, hot)}<div><div class="tags">${tag(c.category,"cat")}${safetyTag(c.safety)}${hot?tag("rising","rise"):""}</div><h3>${esc(c.name)}</h3><div class="plats">${c.platforms.map(p=>logo(p)).join("")}<span class="k">${c.n_items} result${c.n_items>1?"s":""} on ${c.platforms.length} platform${c.platforms.length>1?"s":""}</span></div></div>${pinBtn("sig:"+job.id+":"+c.id)}</div>
+  const top = c.evidence[0];
+  const evLi = e => `<li>${logo(e.platform,"xs")}<a class="ext" href="${esc(linkOf(e))}" target="_blank" rel="noopener" title="${esc(e.topic)} — ${esc(openTitle(e))}">${esc(e.topic)}</a><span class="m">${e.metric?fmt(e.metric)+" "+esc(e.metric_label):"#"+e.rank}</span></li>`;
+  return `<article class="sig ${c.safety}"><div class="sig-top">${ring(c.score, hot)}<div><div class="tags">${tag(c.category,"cat")}${safetyTag(c.safety)}${hot?tag("rising","rise"):""}</div><h3>${top?`<a class="ext" href="${esc(linkOf(top))}" target="_blank" rel="noopener" title="Open the top source — ${esc(openTitle(top))}">${esc(c.name)}</a>`:esc(c.name)}</h3><div class="plats">${c.platforms.map(p=>logo(p)).join("")}<span class="k">${c.n_items} result${c.n_items>1?"s":""} on ${c.platforms.length} platform${c.platforms.length>1?"s":""}</span></div></div>${pinBtn("sig:"+job.id+":"+c.id)}</div>
     <p class="why">${esc(c.why)}</p>
-    <details ${open?"open":""} data-x="${esc(c.id)}"><summary>Content angles &amp; evidence</summary><ul class="angles">${c.angles.map(a=>`<li>${esc(a)}</li>`).join("")}</ul><div class="formats">${c.formats.map(f=>tag(f)).join("")}</div>
-    <ol class="ev">${c.evidence.map(e=>`<li>${logo(e.platform,"xs")}<a class="ext" href="${esc(linkOf(e))}" target="_blank" rel="noopener" title="${esc(e.topic)} — ${esc(openTitle(e))}">${esc(e.topic)}</a><span class="m">${e.metric?fmt(e.metric)+" "+esc(e.metric_label):"#"+e.rank}</span></li>`).join("")}</ol></details></article>`;
+    <div class="srcs-h">Sources</div><ol class="ev top">${c.evidence.slice(0,3).map(evLi).join("")}</ol>
+    <details ${open?"open":""} data-x="${esc(c.id)}"><summary>Content angles${c.evidence.length>3?` &amp; ${c.evidence.length-3} more source${c.evidence.length>4?"s":""}`:""}</summary><ul class="angles">${c.angles.map(a=>`<li>${esc(a)}</li>`).join("")}</ul><div class="formats">${c.formats.map(f=>tag(f)).join("")}</div>
+    ${c.evidence.length>3?`<ol class="ev">${c.evidence.slice(3).map(evLi).join("")}</ol>`:""}</details></article>`;
 }
 function renderPlatforms() {
   const its = visibleItems(); const by = {}; its.forEach(i => (by[i.platform] ||= []).push(i));
@@ -582,15 +605,16 @@ function renderPlatforms() {
   return filtersHTML({platforms:true}) + `<div class="pgrid">${order.map(p => { const list = by[p].slice().sort((a,b)=>a.rank-b.rank); const all = state.expanded.has("p:"+p); const shown = all?list:list.slice(0,12); const src = job.sources.find(s=>s.platform===p);
     return `<section class="pcard"><div class="pcard-h">${logo(p,"big")}<div><h2>${esc(PLAT[p].name)}</h2><div class="src2">${esc(src?.label||PLAT[p].src)}</div></div><span class="cnt">${list.length}</span></div><ol class="rows">${shown.map((i,idx)=>rowHTML(i,idx+1)).join("")}</ol>${list.length>12?`<button class="more" data-more="p:${p}">${all?"Show top 12":"Show all "+list.length}</button>`:""}${src?`<div class="pnote">via ${esc(src.actor)}</div>`:""}</section>`; }).join("")}</div>${!order.length?`<div class="empty"><b>Nothing here yet</b>${job.status==="running"?"Results arrive as each platform finishes.":"Nothing matches these filters."}</div>`:""}`;
 }
-function rowHTML(i, pos) {
+function rowHTML(i, pos, opts = {}) {
   const meta = [];
+  if (opts.plat) meta.push(`<span class="pl">${logo(i.platform,"xs")}${esc(PLAT[i.platform]?.name||i.platform)}</span>`);
   if (i.metric) meta.push(`<span class="m">${fmt(i.metric)} ${esc(i.metric_label)}</span>`);
   if (i.growth) meta.push(`<span class="g">+${i.growth>=1000?"1,000%+":i.growth+"%"}</span>`);
   if (i.direction) meta.push(`<span class="${i.direction==="up"?"g":""}">${i.direction==="up"?"▲ rising":"▼ fading"}</span>`);
   if (i.likes) meta.push(`<span>${fmt(i.likes)} likes</span>`); if (i.comments) meta.push(`<span>${fmt(i.comments)} comments</span>`); if (i.reposts) meta.push(`<span>${fmt(i.reposts)} reposts</span>`); if (i.posts) meta.push(`<span>${fmt(i.posts)} posts</span>`);
   if (i.extra) meta.push(`<span>${esc(i.extra)}</span>`); if (i.age_h != null) meta.push(`<span>${ago(i.age_h)} ago</span>`);
   if (i.related?.length) meta.push(`<span>↳ ${esc(i.related.slice(0,2).join(", "))}</span>`);
-  meta.push(tag(i.category,"cat")); if (i.safety!=="safe") meta.push(safetyTag(i.safety)); if (i.offtopic) meta.push(tag("off-topic"));
+  meta.push(tag(i.category,"cat")); if (i.safety!=="safe") meta.push(safetyTag(i.safety)); if (i.offtopic) meta.push(tag(job.brief?"outside the focus":"off-topic")); if (opts.inSig) meta.push(tag("in a signal","sig"));
   return `<li class="row${i.offtopic?" off":""}"><span class="rk">${String(pos).padStart(2,"0")}</span><div class="t"><a class="ext" href="${esc(linkOf(i))}" target="_blank" rel="noopener" title="${esc(openTitle(i))}">${esc(i.topic)}</a><div class="meta">${meta.join("")}</div>${i.curve?`<div style="margin-top:4px">${spark(i.curve,i.direction)}</div>`:""}</div>${pinBtn("it:"+job.id+":"+i.id)}</li>`;
 }
 function renderTable() {
@@ -689,6 +713,8 @@ function bindJob() {
   m.querySelectorAll("[data-cat]").forEach(b => b.addEventListener("click", () => { const c=b.dataset.cat; state.cats.has(c)?state.cats.delete(c):state.cats.add(c); renderJob(); }));
   m.querySelectorAll("[data-fplat]").forEach(b => b.addEventListener("click", () => { const p=b.dataset.fplat; state.plats.has(p)?state.plats.delete(p):state.plats.add(p); renderJob(); }));
   m.querySelectorAll("[data-more]").forEach(b => b.addEventListener("click", () => { const k=b.dataset.more; state.expanded.has(k)?state.expanded.delete(k):state.expanded.add(k); renderJob(); }));
+  m.querySelectorAll("[data-alln]").forEach(b => b.addEventListener("click", () => { const y = window.scrollY; state.allN = +b.dataset.alln; renderJob(); window.scrollTo(0, y); }));
+  m.querySelector(".jump")?.addEventListener("click", e => { e.preventDefault(); document.querySelector("#all-results")?.scrollIntoView({ behavior: "smooth", block: "start" }); });
   m.querySelectorAll("details[data-x]").forEach(d => d.addEventListener("toggle", () => { d.open?state.expanded.add(d.dataset.x):state.expanded.delete(d.dataset.x); }));
   m.querySelectorAll("th[data-k]").forEach(th => th.addEventListener("click", () => { const key=th.dataset.k; state.sort = { k:key, d: state.sort.k===key ? -state.sort.d : (["topic","platform","category","safety"].includes(key)?1:-1) }; renderJob(); }));
   m.querySelector("#csv")?.addEventListener("click", () => { const rows = visibleItems(); copyText(["Score\tResult\tPlatform\tCategory\tMetric\tMomentum\tAge(h)\tSafety\tURL", ...rows.map(i=>[i.score,i.topic,PLAT[i.platform].name,i.category,i.metric?`${i.metric} ${i.metric_label}`:`rank ${i.rank}`,i.momentum,i.age_h??"",i.safety,linkOf(i)].join("\t"))].join("\n")); });
