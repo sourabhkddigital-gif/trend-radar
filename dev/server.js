@@ -59,7 +59,7 @@ async function installMocks() {
       grab("Funding round in the space", "Business", "safe", [byP.news?.[1], byP.news?.[2], byP.youtube?.[0]]);
       grab("Agents and automation how-tos", "Tech & AI", "safe", [byP.x?.[0], byP.x?.[1], byP.tiktok?.[0], byP.instagram?.[0]]);
       grab("Traffic-camera mishap", "News & Weather", "caution", [byP.reddit?.[0]]);
-      await new Promise(r => setTimeout(r, 1200));
+      await new Promise(r => setTimeout(r, Number(process.env.MOCK_BRAIN_MS || 1200))); // MOCK_BRAIN_MS=15000 to see the long-analysis state
       return json({ model: "mock/model", choices: [{ message: { content: JSON.stringify({ summary: "Mock summary: the topic is having a moment, driven by a $350M raise and a wave of agent tutorials.", clusters, offtopic: [byP.tiktok?.[1]].filter(Boolean), next_queries: ["AI agents", "workflow automation", "EliseAI"] }) } }] });
     }
     return realFetch(input, init);
