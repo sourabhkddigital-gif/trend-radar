@@ -17,11 +17,18 @@
     },
     "api/backfill.js": {
       "maxDuration": 120
+    },
+    "api/credits.js": {
+      "maxDuration": 15
     }
   },
   "rewrites": [
     {
       "source": "/history",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/costs",
       "destination": "/index.html"
     },
     {
