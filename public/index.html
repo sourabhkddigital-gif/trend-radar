@@ -55,7 +55,7 @@ nav.tabs a .n{font:500 11px var(--f-mono);color:var(--muted);margin-left:5px}
 .topbtns{display:flex;gap:6px;align-items:center}
 @media (max-width:760px){nav.tabs{margin-left:0;flex:1 1 100%}}
 
-.btn{border:1px solid var(--line-2);background:var(--surface);border-radius:9px;padding:8px 13px;font-weight:700;font-size:13px;cursor:pointer;color:var(--ink);display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.btn{border:1px solid var(--line-2);background:var(--surface);border-radius:9px;padding:8px 13px;font-weight:700;font-size:13px;cursor:pointer;color:var(--ink);display:inline-flex;align-items:center;gap:6px;white-space:nowrap;text-decoration:none}
 .btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
 :root[data-theme="dark"] .btn.primary{color:#0E1311}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .btn.primary{color:#0E1311}}
@@ -240,6 +240,12 @@ th[aria-sort]::after{content:" ↓";color:var(--accent)} th[aria-sort="ascending
 td.num{font:500 12.5px var(--f-mono);text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
 td a{color:var(--ink);text-decoration:none} td a:hover{text-decoration:underline;color:var(--accent)}
 .tbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between;padding-block:8px} .tbar .sub{font-size:12.5px;color:var(--muted)}
+/* history */
+.hist-h{font:400 clamp(28px,4vw,40px)/1.1 var(--f-display)}
+.histbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:14px 0 6px}
+.histbar input[type=search]{flex:1 1 260px;min-width:0;padding:10px 12px;border:1px solid var(--line-2);border-radius:10px;background:var(--surface);color:var(--ink);font:500 14px var(--f-ui)}
+.histbar .dl{display:inline-flex;align-items:center;gap:6px} .histbar input[type=date]{padding:8px 10px;border:1px solid var(--line-2);border-radius:9px;background:var(--surface);color:var(--ink);font:500 13px var(--f-mono)}
+.htab{min-width:980px} .htab td{font-size:13px} .htab td a{font-weight:700} .htab .focus-cell,.htab .top-cell{max-width:260px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--ink-2)} .htab td.num small{color:var(--muted);font-size:11px}
 
 /* sources + prose */
 .srcs{display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:12px;padding-top:6px}
@@ -317,6 +323,7 @@ footer{padding:36px 0 30px;color:var(--muted);font-size:12.5px;display:flex;flex
   <div class="status" id="status"></div>
   <nav class="tabs" id="tabs" hidden></nav>
   <div class="topbtns">
+    <a class="btn" id="history-link" href="/history" title="Every research, saved">History</a>
     <button class="btn" id="shortlist-btn" title="Shortlist">☆ <span id="shortlist-n">0</span></button>
     <button class="btn icon" id="settings-btn" title="Settings" aria-label="Settings">⚙</button>
   </div>
@@ -398,12 +405,13 @@ function route() {
   const m = location.pathname.match(/^\/r\/([a-z0-9]+)/i) || location.search.match(/[?&]job=([a-z0-9]+)/i);
   const id = m?.[1]; const hash = (location.hash || "#radar").slice(1);
   state.view = VIEWS.some(v => v[0] === hash) ? hash : "radar";
-  if (id) loadJob(id); else renderHome();
+  if (id) loadJob(id); else if (/^\/history\/?$/.test(location.pathname)) renderHistory(); else renderHome();
 }
 function go(path) { history.pushState({}, "", path); route(); }
 window.addEventListener("popstate", route);
 window.addEventListener("hashchange", () => { if (job) { state.view = (location.hash||"#radar").slice(1); renderJob(); } });
 $("#home-link").addEventListener("click", e => { e.preventDefault(); stopPolling(); job = null; go("/"); });
+$("#history-link").addEventListener("click", e => { e.preventDefault(); stopPolling(); job = null; go("/history"); });
 
 /* ---------- home ---------- */
 async function renderHome() {
@@ -434,7 +442,7 @@ async function renderHome() {
     ${form.mode==="topic"?`<div class="examples"><span class="lbl">Try</span>${EXAMPLES.map(e=>`<button type="button" class="chip" data-example="${esc(e)}">${esc(e)}</button>`).join("")}</div>`:""}
     <div id="home-note"></div>
   </section>
-  <section class="recent"><div class="sec-h"><h3>Recent research</h3><span class="sub" id="recent-sub"></span></div><div id="recent"><div class="empty">Loading…</div></div></section>`;
+  <section class="recent"><div class="sec-h"><h3>Recent research</h3><span class="sub" id="recent-sub"></span></div><div id="recent"><div class="empty">Loading…</div></div><p class="hint" style="margin-top:12px"><a href="/history" id="recent-all" style="color:var(--accent-ink);font-weight:700;text-decoration:none">See the full history — every research, searchable →</a></p></section>`;
 
   m.querySelector("#form").addEventListener("submit", e => { e.preventDefault(); form.topic = m.querySelector("#topic").value; form.brief = (m.querySelector("#brief")?.value || "").trim(); startResearch(); });
   const briefEl = m.querySelector("#brief");
@@ -449,6 +457,7 @@ async function renderHome() {
   m.querySelectorAll("[data-window]").forEach(b => b.addEventListener("click", () => { form.windowH = +b.dataset.window; renderHome(); }));
   m.querySelectorAll("[data-plat]").forEach(b => b.addEventListener("click", () => { const p=b.dataset.plat; form.plats.has(p)?form.plats.delete(p):form.plats.add(p); renderHome(); }));
   m.querySelectorAll("[data-example]").forEach(b => b.addEventListener("click", () => { form.topic = b.dataset.example; m.querySelector("#topic").value = form.topic; startResearch(); }));
+  m.querySelector("#recent-all")?.addEventListener("click", e => { e.preventDefault(); go("/history"); });
 
   try { health = health || await api("/api/health"); } catch {}
   if (health && !health.server_keys && !settings.apify) $("#home-note").innerHTML = `<div class="note">This deployment has no shared Apify token. Open <b>Settings</b> (⚙) and add your own Apify token and OpenRouter key to run research.</div>`;
@@ -477,6 +486,67 @@ async function startResearch({ fresh = false } = {}) {
     const note = $("#home-note"); if (note) note.innerHTML = `<div class="note err">${esc(e.message)}</div>`; else toast(e.message, 4000);
     if (btn) { btn.disabled = false; btn.textContent = form.mode==="topic"?"Research →":"Scan trends →"; }
   }
+}
+
+/* ---------- history (the report archive in Supabase) ---------- */
+let hist = { q: "", from: "", to: "", rows: [], total: 0, stats: null, enabled: null, loading: false };
+function histParams(limit, offset) { const p = new URLSearchParams(); if (hist.q) p.set("q", hist.q); if (hist.from) p.set("from", hist.from); if (hist.to) p.set("to", hist.to); p.set("limit", limit); p.set("offset", offset); return p.toString(); }
+async function renderHistory() {
+  $("#tabs").hidden = true; $("#status").innerHTML = ""; renderVeil();
+  const m = $("#main");
+  m.innerHTML = `
+  <section class="hist">
+    <div class="sec-h" style="padding-top:28px"><h2 class="hist-h">Research history</h2><span class="sub" id="hist-stats">loading…</span></div>
+    <form class="histbar" id="hist-form">
+      <input id="hq" type="search" placeholder="Search keyword, focus, signal or summary…" value="${esc(hist.q)}" aria-label="Search history">
+      <label class="dl"><span class="lbl">From</span><input id="hfrom" type="date" value="${esc(hist.from)}"></label>
+      <label class="dl"><span class="lbl">To</span><input id="hto" type="date" value="${esc(hist.to)}"></label>
+      <button class="btn primary" type="submit">Search</button>
+      <button class="btn" type="button" id="hclear">Clear</button>
+      <button class="btn" type="button" id="hcsv" title="Download the rows matching this search as a spreadsheet">Export CSV</button>
+    </form>
+    <div id="hist-body"><div class="empty">Loading…</div></div>
+  </section>`;
+  m.querySelector("#hist-form").addEventListener("submit", e => { e.preventDefault(); hist.q = $("#hq").value.trim(); hist.from = $("#hfrom").value; hist.to = $("#hto").value; loadHistory(); });
+  m.querySelector("#hclear").addEventListener("click", () => { hist.q = hist.from = hist.to = ""; renderHistory(); });
+  m.querySelector("#hcsv").addEventListener("click", exportHistoryCsv);
+  loadHistory();
+}
+async function loadHistory(more = false) {
+  const box = $("#hist-body"); if (!box) return;
+  hist.loading = true;
+  try {
+    const r = await api("/api/history?" + histParams(50, more ? hist.rows.length : 0) + (more ? "&stats=0" : ""));
+    hist.enabled = r.enabled; hist.total = r.total || 0; if (r.stats) hist.stats = r.stats;
+    hist.rows = more ? hist.rows.concat(r.reports) : r.reports;
+    renderHistoryBody();
+  } catch (e) { box.innerHTML = `<div class="note err">${esc(e.message)}</div>`; }
+  hist.loading = false;
+}
+function renderHistoryBody() {
+  const box = $("#hist-body"), st = $("#hist-stats"); if (!box) return;
+  if (hist.enabled === false) { st.textContent = "database not connected"; box.innerHTML = `<div class="empty"><b>No database yet</b>Connect Supabase (SUPABASE_URL + SUPABASE_SECRET_KEY) and every research will be archived here.</div>`; return; }
+  st.innerHTML = hist.stats ? `<b>${hist.stats.reports}</b> report${hist.stats.reports===1?"":"s"} · <b>${hist.stats.keywords}</b> keyword${hist.stats.keywords===1?"":"s"}${hist.stats.since?` · since ${new Date(hist.stats.since).toLocaleDateString([], {dateStyle:"medium"})}`:""} · saved in the database` : "";
+  const filtered = hist.q || hist.from || hist.to;
+  if (!hist.rows.length) { box.innerHTML = `<div class="empty"><b>${filtered?"Nothing matches":"No reports yet"}</b>${filtered?"Try a different keyword or a wider date range.":"Run a research and it will be saved here automatically."}</div>`; return; }
+  const dur = s => s == null ? "—" : fmtDur(s);
+  box.innerHTML = `<div class="tbar"><span class="sub">${filtered?`${hist.total} matching report${hist.total===1?"":"s"}`:`all ${hist.total} reports`} · newest first · click a keyword to open the report</span></div>
+  <div class="tblwrap"><table class="htab"><thead><tr><th>Date</th><th>Keyword</th><th>Focus</th><th>Region · window</th><th class="num">Results</th><th class="num">Signals</th><th>Top signal</th><th class="num">Took</th></tr></thead><tbody>
+  ${hist.rows.map(r => `<tr><td class="num" style="text-align:left">${new Date(r.created_at).toLocaleString([], {dateStyle:"medium", timeStyle:"short"})}</td><td><a href="/r/${esc(r.id)}" data-open="${esc(r.id)}">${esc(r.topic)}</a>${r.status==="running"?` <span class="tag">running</span>`:r.status==="failed"?` <span class="tag avoid">failed</span>`:""}</td><td class="focus-cell" title="${esc(r.brief||"")}">${esc(r.brief||"")}</td><td class="num" style="text-align:left">${esc(r.region||"")} · ${r.window_h}h</td><td class="num">${r.n_items}${r.n_offtopic?`<small> +${r.n_offtopic} off</small>`:""}</td><td class="num">${r.n_signals}</td><td class="top-cell" title="${esc(r.top_signal||"")}">${esc(r.top_signal||"—")}</td><td class="num">${dur(r.duration_s)}</td></tr>`).join("")}
+  </tbody></table></div>
+  ${hist.rows.length < hist.total ? `<button class="more" id="hmore" style="border:1px solid var(--line);border-radius:10px;margin-top:10px">Show 50 more (${hist.total - hist.rows.length} left)</button>` : ""}`;
+  box.querySelectorAll("[data-open]").forEach(a => a.addEventListener("click", e => { e.preventDefault(); go("/r/" + a.dataset.open); }));
+  box.querySelector("#hmore")?.addEventListener("click", () => loadHistory(true));
+}
+async function exportHistoryCsv() {
+  try {
+    const r = await api("/api/history?" + histParams(1000, 0) + "&stats=0");
+    const cols = ["date", "keyword", "focus", "region", "window_h", "platforms", "status", "results", "outside_focus", "signals", "top_signal", "took_s", "model", "link", "summary"];
+    const cell = v => `"${String(v ?? "").replace(/"/g, '""')}"`;
+    const lines = [cols.join(","), ...r.reports.map(x => [x.created_at, x.topic, x.brief, x.region, x.window_h, (x.platforms||[]).join(" "), x.status, x.n_items, x.n_offtopic, x.n_signals, x.top_signal, x.duration_s, x.brain_model, location.origin + "/r/" + x.id, x.summary].map(cell).join(","))];
+    const blob = new Blob(["﻿" + lines.join("\n")], { type: "text/csv;charset=utf-8" }); const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = `trend-radar-history-${new Date().toISOString().slice(0,10)}.csv`; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+    toast(`Exported ${r.reports.length} report${r.reports.length===1?"":"s"}`);
+  } catch (e) { toast(e.message, 4000); }
 }
 
 /* ---------- job ---------- */
@@ -530,7 +600,7 @@ function renderJob() {
   const total = totalDur();
   $("#status").innerHTML = `<span><span class="dot${running?" run":""}"></span>${running?"Running":"Done"} <b>${when.toLocaleString([], {dateStyle:"medium", timeStyle:"short"})}</b></span><span>Window <b>${job.windowH}h</b></span><span>Region <b>${esc(job.region)}</b></span><span><b>${items().length}</b> results</span>${running?`<span>Elapsed <b class="tm" data-since="${esc(job.created_at)}">${fmtDur(secsSince(job.created_at))}</b></span>`:total!=null?`<span>Took <b>${fmtDur(total)}</b></span>`:""}`;
 
-  const head = `<div class="jobhead"><div><h2>${job.mode==="topic"?esc(job.topic):"What's trending now"}</h2><div class="meta"><span>${job.mode==="topic"?"Topic research":"Trend scan"}</span><span>${esc(job.region)} · last ${job.windowH}h</span><span>${job.sources.filter(s=>s.status==="done").length}/${job.sources.length} sources</span>${job.brain?.model?`<span>brain: ${esc(job.brain.model)}</span>`:""}</div>${job.brief?`<div class="brief-view"><span class="lbl">Focus</span><p>${esc(job.brief)}</p></div>`:""}</div>
+  const head = `<div class="jobhead"><div><h2>${job.mode==="topic"?esc(job.topic):"What's trending now"}</h2><div class="meta"><span>${job.mode==="topic"?"Topic research":"Trend scan"}</span><span>${esc(job.region)} · last ${job.windowH}h</span><span>${job.sources.filter(s=>s.status==="done").length}/${job.sources.length} sources</span>${job.brain?.model?`<span>brain: ${esc(job.brain.model)}</span>`:""}${job.archived_at?`<span title="Archived in the database on ${esc(new Date(job.archived_at).toLocaleString())}">✓ saved to database</span>`:""}</div>${job.brief?`<div class="brief-view"><span class="lbl">Focus</span><p>${esc(job.brief)}</p></div>`:""}</div>
     <div class="topbtns"><button class="btn" id="share">Copy link</button><button class="btn" id="rerun">Run again</button>${job.brain?.status==="failed"||job.brain?.status==="skipped"?`<button class="btn primary" id="retry-brain">Analyse with AI</button>`:""}</div></div>
     ${job.error?`<div class="note err">${esc(job.error)}</div>`:""}
     <div class="progress">${job.sources.map(s => `<div class="src st-${s.status}">${logo(s.platform)}<div class="t"><b>${esc(s.label||PLAT[s.platform]?.name)}</b><span>${esc(s.actor)}</span></div><div class="r"><span class="st" title="${esc(s.error||"")}">${s.status==="running"?"running…":s.status==="done"?s.count+" rows":s.status==="empty"?"no results":s.status==="failed"?"failed":"queued"}</span>${s.status==="running"&&s.started_at?`<span class="tm" data-since="${esc(s.started_at)}" title="time since this platform's extraction started">${fmtDur(secsSince(s.started_at))}</span>`:srcDur(s)!=null?`<span class="tm" title="time this platform took to extract its results">${s.status==="failed"?"failed after":"done in"} ${fmtDur(srcDur(s))}</span>`:""}</div></div>`).join("")}</div>`;
