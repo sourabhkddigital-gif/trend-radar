@@ -1,8 +1,8 @@
 import { resolveKeys, createJob } from "../lib/jobs.js";
 import { send, guard, cors } from "../lib/http.js";
 export const config = { maxDuration: 60 };
-const recent = new Map(); // soft per-instance limiter: 6 starts per IP per 10 minutes
-function limited(ip) { const now = Date.now(); const arr = (recent.get(ip) || []).filter(t => now - t < 600000); if (arr.length >= 6) return true; arr.push(now); recent.set(ip, arr); return false; }
+const recent = new Map(); // bot guard only: 60 starts per IP per 10 minutes is far beyond what a person can do (each research takes 1–3 min)
+function limited(ip) { const now = Date.now(); const arr = (recent.get(ip) || []).filter(t => now - t < 600000); if (arr.length >= 60) return true; arr.push(now); recent.set(ip, arr); return false; }
 export default async function handler(req, res) {
   if (cors(req, res)) return;
   await guard(res, async () => {
