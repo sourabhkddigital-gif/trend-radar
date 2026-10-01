@@ -11,7 +11,7 @@ const PORT = Number(process.env.PORT || 3000);
 if (process.env.MOCK) await installMocks();
 
 const handlers = {};
-for (const name of ["research", "job", "jobs", "health"]) handlers[name] = (await import(pathToFileURL(path.join(ROOT, "api", name + ".js")).href)).default;
+for (const name of ["research", "job", "jobs", "health", "history", "backfill"]) handlers[name] = (await import(pathToFileURL(path.join(ROOT, "api", name + ".js")).href)).default;
 
 http.createServer(async (req, res) => {
   const url = new URL(req.url, "http://localhost");
@@ -24,7 +24,7 @@ http.createServer(async (req, res) => {
     try { await h(vreq, vres); } catch (e) { res.statusCode = 500; res.end(JSON.stringify({ error: String(e.message) })); }
     return;
   }
-  let file = url.pathname === "/" || url.pathname.startsWith("/r/") ? "/index.html" : url.pathname;
+  let file = url.pathname === "/" || url.pathname.startsWith("/r/") || url.pathname === "/history" ? "/index.html" : url.pathname;
   const fp = path.join(ROOT, "public", file);
   if (!fp.startsWith(path.join(ROOT, "public")) || !existsSync(fp)) { res.writeHead(404); return res.end("not found"); }
   res.setHeader("Content-Type", fp.endsWith(".js") ? "text/javascript" : fp.endsWith(".html") ? "text/html; charset=utf-8" : "application/octet-stream");
@@ -34,7 +34,8 @@ http.createServer(async (req, res) => {
 async function installMocks() {
   const { fixtures } = await import(pathToFileURL(path.join(ROOT, "test", "fixtures.js")).href);
   const F = fixtures();
-  const kv = new Map(); const runs = new Map(); let n = 0;
+  const kv = new Map(); const runs = new Map(); let n = 0; const db = {};
+  if (process.env.MOCK_DB) { process.env.SUPABASE_URL = "https://mock.supabase.co"; process.env.SUPABASE_SECRET_KEY = "sb_secret_mock"; }
   const realFetch = globalThis.fetch;
   const json = (o, status = 200) => new Response(JSON.stringify(o), { status, headers: { "Content-Type": "application/json" } });
   globalThis.fetch = async (input, init = {}) => {
@@ -49,6 +50,21 @@ async function installMocks() {
       if ((mm = p.match(/^\/datasets\/ds-([^/]+)\/items$/))) { const r = runs.get(mm[1]); return json(r.fail ? [] : (F[r.key] || [])); }
       if (p === "/users/me") return json({ data: { id: "u", username: "mock" } });
       return json({ error: { message: "mock: unknown " + p } }, 404);
+    }
+    if (u.hostname.endsWith("supabase.co")) {
+      const t = u.pathname.replace(/^\/rest\/v1\//, ""); const tbl = (db[t] ||= []); const q = u.searchParams; const body = init.body ? JSON.parse(init.body) : null;
+      const pk = t === "reports" ? r => r.id : r => r.report_id + "|" + (r.item_id ?? r.signal_id);
+      const eqId = [...q.entries()].find(([k, v]) => v.startsWith("eq."));
+      if (m === "POST") { for (const r of [].concat(body)) { const i = tbl.findIndex(x => pk(x) === pk(r)); i >= 0 ? tbl[i] = r : tbl.push(r); } return new Response("", { status: 201 }); }
+      if (m === "DELETE") { if (eqId) db[t] = tbl.filter(r => String(r[eqId[0]]) !== eqId[1].slice(3)); return new Response(null, { status: 204 }); }
+      let rows = tbl.slice();
+      if (eqId) rows = rows.filter(r => String(r[eqId[0]]) === eqId[1].slice(3));
+      const or = q.get("or"); if (or) { const term = decodeURIComponent(or.match(/ilike\.\*(.*?)\*/)[1]).toLowerCase(); rows = rows.filter(r => ["topic", "brief", "top_signal", "summary"].some(c => String(r[c] || "").toLowerCase().includes(term))); }
+      const gte = q.get("created_at")?.startsWith("gte.") ? q.get("created_at").slice(4) : null; if (gte) rows = rows.filter(r => r.created_at >= gte);
+      if (q.get("order")?.startsWith("created_at.desc")) rows.sort((a, b) => b.created_at < a.created_at ? -1 : 1);
+      const total = rows.length; const off = Number(q.get("offset") || 0), lim = Number(q.get("limit") || 1000); rows = rows.slice(off, off + lim);
+      const sel = q.get("select"); if (sel && sel !== "*") rows = rows.map(r => Object.fromEntries(sel.split(",").map(c => [c, r[c]])));
+      return new Response(JSON.stringify(rows), { status: 200, headers: { "Content-Type": "application/json", "Content-Range": `${off}-${off + rows.length - 1}/${total}` } });
     }
     if (u.hostname === "openrouter.ai") {
       const body = JSON.parse(init.body); const prompt = body.messages.at(-1).content;
