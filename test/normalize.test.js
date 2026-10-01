@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { plan, normalize, FIELDS } from "../lib/sources.js";
+import { plan, normalize, FIELDS, fixUrl, searchUrl } from "../lib/sources.js";
 import { scoreItems, buildClusters } from "../lib/score.js";
 import { buildPrompt } from "../lib/brain.js";
 import { fixtures } from "./fixtures.js";
@@ -77,4 +77,24 @@ test("scoring assigns reach/momentum/score/category and clusters build from brai
   assert.equal(clusters.length, 1); assert.equal(clusters[0].n_items, 2); assert.ok(clusters[0].score > 0); assert.equal(clusters[0].platforms[0], "news");
   const prompt = buildPrompt({ mode: "topic", topic: "AI automation", region: "US", windowH: 24, items: all, series: null });
   assert.ok(prompt.includes("news-1 |") && prompt.includes("Return ONLY JSON"));
+});
+
+test("every item gets an absolute link: bad or missing URLs fall back to the platform's own search", () => {
+  assert.equal(fixUrl("reddit", "/r/running/comments/abc/x/", "t"), "https://www.reddit.com/r/running/comments/abc/x/");
+  assert.equal(fixUrl("x", "//x.com/a/status/1", "t"), "https://x.com/a/status/1");
+  assert.equal(fixUrl("youtube", "www.youtube.com/watch?v=1", "t"), "https://www.youtube.com/watch?v=1");
+  assert.equal(fixUrl("tiktok", "", "running shoes"), searchUrl("tiktok", "running shoes"));
+  assert.equal(fixUrl("news", undefined, "e-bikes"), "https://news.google.com/search?q=e-bikes");
+  assert.equal(fixUrl("instagram", "javascript:alert(1)", "x"), searchUrl("instagram", "x"));
+  const { items } = normalize({ platform: "tiktok", actor: "clockworks/tiktok-scraper" }, [{ text: "no link here", playCount: 5 }], ctx);
+  assert.equal(items.length, 1); assert.ok(items[0].url.startsWith("https://www.tiktok.com/search?q="));
+});
+
+test("the focus brief steers the prompt and the off-topic rule; without it the prompt is unchanged", () => {
+  const items = [{ id: "news-1", platform: "news", region: "US", topic: "Nike Apex launch", rank: 1 }];
+  const plain = buildPrompt({ mode: "topic", topic: "running shoes", region: "US", windowH: 24, items });
+  const focused = buildPrompt({ mode: "topic", topic: "running shoes", brief: "marathon racing shoes; ignore fashion sneakers", region: "US", windowH: 24, items });
+  assert.ok(!plain.includes("FOCUS BRIEF")); assert.ok(plain.includes("Expect well under a third"));
+  assert.ok(focused.includes("FOCUS BRIEF")); assert.ok(focused.includes("ignore fashion sneakers")); assert.ok(!focused.includes("Expect well under a third"));
+  assert.ok(!buildPrompt({ mode: "trending", topic: "", brief: "x", region: "US", windowH: 24, items }).includes("FOCUS BRIEF"));
 });
