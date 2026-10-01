@@ -206,7 +206,7 @@ a.ext{text-decoration:none} a.ext::after{content:"↗";font:600 10px var(--f-mon
 .bars{display:grid;gap:7px}
 .bar{display:grid;grid-template-columns:118px minmax(0,1fr) 34px;gap:8px;align-items:center;font-size:12.5px}
 .bar .lbl{color:var(--ink-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font:inherit;text-transform:none;letter-spacing:0;margin:0}
-.bar .trk{height:12px;background:var(--surface-2);border-radius:3px;overflow:hidden} .bar .fill{height:100%;background:var(--viz-1);border-radius:0 3px 3px 0;min-width:2px}
+.bar .trk{display:block;height:12px;background:var(--surface-2);border-radius:3px;overflow:hidden} .bar .fill{display:block;height:100%;background:var(--viz-1);border-radius:0 3px 3px 0;min-width:2px}
 .bar .val{font:500 12px var(--f-mono);text-align:right;font-variant-numeric:tabular-nums}
 .plist{list-style:none;margin:0;padding:0;display:grid;gap:8px}
 .plist li{display:grid;grid-template-columns:24px minmax(0,1fr) auto;gap:10px;align-items:center;font-size:12.5px}
@@ -245,7 +245,14 @@ td a{color:var(--ink);text-decoration:none} td a:hover{text-decoration:underline
 .histbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:14px 0 6px}
 .histbar input[type=search]{flex:1 1 260px;min-width:0;padding:10px 12px;border:1px solid var(--line-2);border-radius:10px;background:var(--surface);color:var(--ink);font:500 14px var(--f-ui)}
 .histbar .dl{display:inline-flex;align-items:center;gap:6px} .histbar input[type=date]{padding:8px 10px;border:1px solid var(--line-2);border-radius:9px;background:var(--surface);color:var(--ink);font:500 13px var(--f-mono)}
-.htab{min-width:980px} .htab td{font-size:13px} .htab td a{font-weight:700} .htab .focus-cell,.htab .top-cell{max-width:260px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--ink-2)} .htab td.num small{color:var(--muted);font-size:11px}
+.htab{min-width:1060px} .htab td{font-size:13px} .htab td a{font-weight:700} .htab .focus-cell,.htab .top-cell{max-width:260px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--ink-2)} .htab td.num small{color:var(--muted);font-size:11px}
+.htab td.cost,.htab th.cost{text-align:right} .htab td.cost{font:500 12.5px var(--f-mono);font-variant-numeric:tabular-nums;white-space:nowrap} .htab td.cost small{color:var(--muted);font-size:10.5px}
+/* cost tracker */
+.costs{margin:16px 0 22px} .costs .kpis{margin-block:0 12px} .costs .kpi .v{font-variant-numeric:tabular-nums}
+.costgrid{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:12px} @media (max-width:860px){.costgrid{grid-template-columns:minmax(0,1fr)}}
+.spendchart{width:100%;height:160px;display:block} .spendchart .grid{stroke:var(--line);stroke-width:1} .spendchart .b{fill:var(--accent)} .spendchart g:hover .b{fill:var(--accent-ink)} .spendchart .hit{fill:transparent} .spendchart text{font:500 10px var(--f-mono);fill:var(--muted)}
+.costnote{font-size:12px;color:var(--muted);margin:10px 0 0;line-height:1.5}
+.timing.cost .bar i{background:var(--viz-1)} .timing.cost .row.brain .bar i{background:var(--flare)} .timing.cost .row.st-none .bar i{background:var(--line-2)}
 
 /* sources + prose */
 .srcs{display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:12px;padding-top:6px}
@@ -469,7 +476,7 @@ async function loadRecent() {
   try {
     const { jobs, key_source } = await api("/api/jobs");
     $("#recent-sub").textContent = key_source === "byo" ? "from your Apify account" : "shared on this site";
-    box.innerHTML = jobs.length ? `<div class="rgrid">${jobs.slice(0,24).map(j => `<button class="rcard" data-open="${j.id}"><span class="t">${esc(j.topic)}</span>${j.brief?`<span class="f" title="${esc(j.brief)}">Focus: ${esc(j.brief)}</span>`:""}<span class="m">${esc(j.region)} · ${j.windowH}h · ${new Date(j.created_at).toLocaleString([], {dateStyle:"medium", timeStyle:"short"})} · ${j.status==="running"?"running":j.n_items+" results"}</span>${j.top?`<span class="s">Top signal: ${esc(j.top)}</span>`:""}</button>`).join("")}</div>` : `<div class="empty"><b>No research yet</b>Your first run will appear here, and every run gets a shareable link.</div>`;
+    box.innerHTML = jobs.length ? `<div class="rgrid">${jobs.slice(0,24).map(j => `<button class="rcard" data-open="${j.id}"><span class="t">${esc(j.topic)}</span>${j.brief?`<span class="f" title="${esc(j.brief)}">Focus: ${esc(j.brief)}</span>`:""}<span class="m">${esc(j.region)} · ${j.windowH}h · ${new Date(j.created_at).toLocaleString([], {dateStyle:"medium", timeStyle:"short"})} · ${j.status==="running"?"running":j.n_items+" results"}${j.cost_usd!=null?` · ${fmtUsd(j.cost_usd)}`:""}</span>${j.top?`<span class="s">Top signal: ${esc(j.top)}</span>`:""}</button>`).join("")}</div>` : `<div class="empty"><b>No research yet</b>Your first run will appear here, and every run gets a shareable link.</div>`;
     box.querySelectorAll("[data-open]").forEach(b => b.addEventListener("click", () => go("/r/"+b.dataset.open)));
   } catch (e) { box.innerHTML = `<div class="empty">${esc(e.message)}</div>`; }
 }
@@ -526,24 +533,70 @@ async function loadHistory(more = false) {
 function renderHistoryBody() {
   const box = $("#hist-body"), st = $("#hist-stats"); if (!box) return;
   if (hist.enabled === false) { st.textContent = "database not connected"; box.innerHTML = `<div class="empty"><b>No database yet</b>Connect Supabase (SUPABASE_URL + SUPABASE_SECRET_KEY) and every research will be archived here.</div>`; return; }
-  st.innerHTML = hist.stats ? `<b>${hist.stats.reports}</b> report${hist.stats.reports===1?"":"s"} · <b>${hist.stats.keywords}</b> keyword${hist.stats.keywords===1?"":"s"}${hist.stats.since?` · since ${new Date(hist.stats.since).toLocaleDateString([], {dateStyle:"medium"})}`:""} · saved in the database` : "";
+  st.innerHTML = hist.stats ? `<b>${hist.stats.reports}</b> report${hist.stats.reports===1?"":"s"} · <b>${hist.stats.keywords}</b> keyword${hist.stats.keywords===1?"":"s"}${hist.stats.since?` · since ${new Date(hist.stats.since).toLocaleDateString([], {dateStyle:"medium"})}`:""}${hist.stats.spend?.tracked?` · <b>${fmtUsd(hist.stats.spend.total_usd)}</b> spent`:""} · saved in the database` : "";
   const filtered = hist.q || hist.from || hist.to;
   if (!hist.rows.length) { box.innerHTML = `<div class="empty"><b>${filtered?"Nothing matches":"No reports yet"}</b>${filtered?"Try a different keyword or a wider date range.":"Run a research and it will be saved here automatically."}</div>`; return; }
   const dur = s => s == null ? "—" : fmtDur(s);
-  box.innerHTML = `<div class="tbar"><span class="sub">${filtered?`${hist.total} matching report${hist.total===1?"":"s"}`:`all ${hist.total} reports`} · newest first · click a keyword to open the report</span></div>
-  <div class="tblwrap"><table class="htab"><thead><tr><th>Date</th><th>Keyword</th><th>Focus</th><th>Region · window</th><th class="num">Results</th><th class="num">Signals</th><th>Top signal</th><th class="num">Took</th></tr></thead><tbody>
-  ${hist.rows.map(r => `<tr><td class="num" style="text-align:left">${new Date(r.created_at).toLocaleString([], {dateStyle:"medium", timeStyle:"short"})}</td><td><a href="/r/${esc(r.id)}" data-open="${esc(r.id)}">${esc(r.topic)}</a>${r.status==="running"?` <span class="tag">running</span>`:r.status==="failed"?` <span class="tag avoid">failed</span>`:""}</td><td class="focus-cell" title="${esc(r.brief||"")}">${esc(r.brief||"")}</td><td class="num" style="text-align:left">${esc(r.region||"")} · ${r.window_h}h</td><td class="num">${r.n_items}${r.n_offtopic?`<small> +${r.n_offtopic} off</small>`:""}</td><td class="num">${r.n_signals}</td><td class="top-cell" title="${esc(r.top_signal||"")}">${esc(r.top_signal||"—")}</td><td class="num">${dur(r.duration_s)}</td></tr>`).join("")}
+  const costCell = r => r.cost_usd == null ? `<td class="cost" title="no cost data for this report">—</td>` : `<td class="cost" title="Scrapers (Apify) ${fmtUsd(r.cost_apify_usd)}${r.cost_brain_usd!=null?` · AI (OpenRouter) ${fmtUsd(r.cost_brain_usd)}`:" · AI cost not recorded"}">${fmtUsd(r.cost_usd)}${r.cost_brain_usd==null&&r.status!=="running"?`<small title="AI cost not recorded for this report">*</small>`:""}</td>`;
+  box.innerHTML = `${filtered ? "" : costTrackerHTML()}<div class="tbar"><span class="sub">${filtered?`${hist.total} matching report${hist.total===1?"":"s"} · ${fmtUsd(hist.rows.reduce((a,r)=>a+(Number(r.cost_usd)||0),0))} spent on the ${hist.rows.length} shown`:`all ${hist.total} reports`} · newest first · click a keyword to open the report</span></div>
+  <div class="tblwrap"><table class="htab"><thead><tr><th>Date</th><th>Keyword</th><th>Focus</th><th>Region · window</th><th class="num">Results</th><th class="num">Signals</th><th>Top signal</th><th class="num">Took</th><th class="cost">Cost</th></tr></thead><tbody>
+  ${hist.rows.map(r => `<tr><td class="num" style="text-align:left">${new Date(r.created_at).toLocaleString([], {dateStyle:"medium", timeStyle:"short"})}</td><td><a href="/r/${esc(r.id)}" data-open="${esc(r.id)}">${esc(r.topic)}</a>${r.status==="running"?` <span class="tag">running</span>`:r.status==="failed"?` <span class="tag avoid">failed</span>`:""}</td><td class="focus-cell" title="${esc(r.brief||"")}">${esc(r.brief||"")}</td><td class="num" style="text-align:left">${esc(r.region||"")} · ${r.window_h}h</td><td class="num">${r.n_items}${r.n_offtopic?`<small> +${r.n_offtopic} off</small>`:""}</td><td class="num">${r.n_signals}</td><td class="top-cell" title="${esc(r.top_signal||"")}">${esc(r.top_signal||"—")}</td><td class="num">${dur(r.duration_s)}</td>${costCell(r)}</tr>`).join("")}
   </tbody></table></div>
   ${hist.rows.length < hist.total ? `<button class="more" id="hmore" style="border:1px solid var(--line);border-radius:10px;margin-top:10px">Show 50 more (${hist.total - hist.rows.length} left)</button>` : ""}`;
   box.querySelectorAll("[data-open]").forEach(a => a.addEventListener("click", e => { e.preventDefault(); go("/r/" + a.dataset.open); }));
   box.querySelector("#hmore")?.addEventListener("click", () => loadHistory(true));
 }
+/* The cost tracker on the History page: totals from the archive, with today / this month / per-day worked out in the viewer's own timezone. */
+function costTrackerHTML() {
+  const sp = hist.stats?.spend; if (!sp) return "";
+  const recent = hist.stats.recent || [];
+  const dayKey = d => { d = new Date(d); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`; };
+  const now = new Date(), today = dayKey(now), month = today.slice(0, 7);
+  let tUsd = 0, tN = 0, mUsd = 0, mN = 0; const perDay = {};
+  for (const [at, usd] of recent) { const k = dayKey(at); perDay[k] = perDay[k] || { usd: 0, n: 0 }; perDay[k].usd += usd; perDay[k].n++; if (k === today) { tUsd += usd; tN++; } if (k.startsWith(month)) { mUsd += usd; mN++; } }
+  const days = []; for (let i = 29; i >= 0; i--) { const d = new Date(now); d.setDate(now.getDate() - i); const k = dayKey(d); days.push({ k, d, usd: perDay[k]?.usd || 0, n: perDay[k]?.n || 0 }); }
+  const avg = sp.tracked ? sp.total_usd / sp.tracked : null;
+  const plats = Object.entries(sp.by_platform).sort((a,b) => b[1] - a[1]); if (sp.brain_usd) plats.push(["ai", sp.brain_usd]); const pmax = Math.max(0.000001, ...plats.map(p => p[1]));
+  const monthName = now.toLocaleDateString([], { month: "long" });
+  if (!sp.tracked) return `<section class="costs"><div class="sec-h"><h3>Cost tracker</h3><span class="sub">Apify + OpenRouter credits per research</span></div><div class="empty"><b>No costs recorded yet</b>From now on every research records what each scraper and the AI step charged; the totals appear here.</div></section>`;
+  return `<section class="costs">
+    <div class="sec-h"><h3>Cost tracker</h3><span class="sub">what the researches cost in Apify credits (scrapers) and OpenRouter credits (AI), in USD · recorded per run</span></div>
+    <div class="kpis">
+      <div class="kpi"><span class="l">Total spent</span><span class="v">${fmtUsd(sp.total_usd)}</span><span class="s">${sp.tracked} research${sp.tracked===1?"":"es"} tracked${avg!=null?` · avg ${fmtUsd(avg)} each`:""}</span></div>
+      <div class="kpi"><span class="l">${esc(monthName)}</span><span class="v">${fmtUsd(mUsd)}</span><span class="s">${mN} research${mN===1?"":"es"} this month</span></div>
+      <div class="kpi flare"><span class="l">Today</span><span class="v">${fmtUsd(tUsd)}</span><span class="s">${tN} research${tN===1?"":"es"} today</span></div>
+      <div class="kpi"><span class="l">Scrapers vs AI</span><span class="v" style="font-size:24px">${fmtUsd(sp.apify_usd)}<small>+ ${fmtUsd(sp.brain_usd)} AI</small></span><span class="s">Apify credits · OpenRouter credits${sp.brain_untracked?` (AI not recorded for ${sp.brain_untracked})`:""}</span></div>
+    </div>
+    <div class="costgrid">
+      <div class="panel"><h3>Spend per day</h3><p class="hint">last 30 days · hover a bar for the day's total</p>${spendChart(days)}</div>
+      <div class="panel"><h3>Spend by platform</h3><p class="hint">all time · which scrapers cost the most</p><div class="bars">${plats.map(([p,v]) => `<div class="bar" title="${esc(p==="ai"?"AI analysis":PLAT[p]?.name||p)}: ${fmtUsd(v)} (${Math.round(100*v/Math.max(sp.total_usd,0.000001))}%)"><span class="lbl">${p==="ai"?"🧠 AI analysis":`${logo(p,"xs")} ${esc(PLAT[p]?.name||p)}`}</span><span class="trk"><span class="fill" style="width:${(100*v/pmax).toFixed(1)}%${p==="ai"?";background:var(--flare)":""}"></span></span><span class="val">${fmtUsd(v)}</span></div>`).join("")||`<span class="hint">No platform costs yet</span>`}</div></div>
+    </div>
+    ${sp.untracked||sp.brain_untracked?`<p class="costnote">${sp.untracked?`${sp.untracked} report${sp.untracked===1?"":"s"} ha${sp.untracked===1?"s":"ve"} no cost data (still running, or their Apify runs are gone). `:""}${sp.brain_untracked?`For ${sp.brain_untracked} report${sp.brain_untracked===1?"":"s"} made before the tracker existed the AI charge was not recorded (marked * in the table), so their totals cover the scrapers only.`:""}</p>`:""}
+  </section>`;
+}
+function spendChart(days) {
+  const W = 640, H = 160, L = 44, R = 8, T = 10, B = 22, pw = W - L - R, ph = H - T - B;
+  const max = Math.max(...days.map(d => d.usd), 0.01);
+  const nice = v => { const p = Math.pow(10, Math.floor(Math.log10(v))); const m = v / p; return (m <= 1 ? 1 : m <= 2 ? 2 : m <= 5 ? 5 : 10) * p; };
+  const top = nice(max); const ticks = [0, top / 2, top];
+  const bw = pw / days.length, gap = Math.max(2, bw * 0.25), w = bw - gap;
+  const y = v => T + ph - (v / top) * ph;
+  const bar = (d, i) => { const h = Math.max(0, ph * d.usd / top); const x = L + i * bw + gap / 2; const yy = T + ph - h; const r = Math.min(4, w / 2, h);
+    const path = h <= 0 ? "" : `M${x} ${T+ph} V${yy+r} Q${x} ${yy} ${x+r} ${yy} H${x+w-r} Q${x+w} ${yy} ${x+w} ${yy+r} V${T+ph} Z`;
+    return `<g><title>${esc(d.d.toLocaleDateString([], { month: "short", day: "numeric" }))}: ${fmtUsd(d.usd)} · ${d.n} research${d.n===1?"":"es"}</title><rect class="hit" x="${L + i * bw}" y="${T}" width="${bw}" height="${ph}"/>${path?`<path class="b" d="${path}"/>`:""}</g>`; };
+  const lbl = i => `<text x="${L + i * bw + bw / 2}" y="${H - 6}" text-anchor="middle">${esc(days[i].d.toLocaleDateString([], { month: "short", day: "numeric" }))}</text>`;
+  return `<svg class="spendchart" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" role="img" aria-label="Spend per day, last 30 days">
+    ${ticks.map(t => `<line class="grid" x1="${L}" x2="${W - R}" y1="${y(t)}" y2="${y(t)}"/><text x="${L - 6}" y="${y(t) + 3}" text-anchor="end">${t ? fmtUsd(t) : "$0"}</text>`).join("")}
+    ${days.map(bar).join("")}
+    ${[0, 10, 20, 29].map(lbl).join("")}
+  </svg>`;
+}
 async function exportHistoryCsv() {
   try {
     const r = await api("/api/history?" + histParams(1000, 0) + "&stats=0");
-    const cols = ["date", "keyword", "focus", "region", "window_h", "platforms", "status", "results", "outside_focus", "signals", "top_signal", "took_s", "model", "link", "summary"];
+    const cols = ["date", "keyword", "focus", "region", "window_h", "platforms", "status", "results", "outside_focus", "signals", "top_signal", "took_s", "model", "cost_usd", "scrapers_usd", "ai_usd", "link", "summary"];
     const cell = v => `"${String(v ?? "").replace(/"/g, '""')}"`;
-    const lines = [cols.join(","), ...r.reports.map(x => [x.created_at, x.topic, x.brief, x.region, x.window_h, (x.platforms||[]).join(" "), x.status, x.n_items, x.n_offtopic, x.n_signals, x.top_signal, x.duration_s, x.brain_model, location.origin + "/r/" + x.id, x.summary].map(cell).join(","))];
+    const lines = [cols.join(","), ...r.reports.map(x => [x.created_at, x.topic, x.brief, x.region, x.window_h, (x.platforms||[]).join(" "), x.status, x.n_items, x.n_offtopic, x.n_signals, x.top_signal, x.duration_s, x.brain_model, x.cost_usd, x.cost_apify_usd, x.cost_brain_usd, location.origin + "/r/" + x.id, x.summary].map(cell).join(","))];
     const blob = new Blob(["﻿" + lines.join("\n")], { type: "text/csv;charset=utf-8" }); const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = `trend-radar-history-${new Date().toISOString().slice(0,10)}.csv`; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
     toast(`Exported ${r.reports.length} report${r.reports.length===1?"":"s"}`);
   } catch (e) { toast(e.message, 4000); }
@@ -600,7 +653,7 @@ function renderJob() {
   const total = totalDur();
   $("#status").innerHTML = `<span><span class="dot${running?" run":""}"></span>${running?"Running":"Done"} <b>${when.toLocaleString([], {dateStyle:"medium", timeStyle:"short"})}</b></span><span>Window <b>${job.windowH}h</b></span><span>Region <b>${esc(job.region)}</b></span><span><b>${items().length}</b> results</span>${running?`<span>Elapsed <b class="tm" data-since="${esc(job.created_at)}">${fmtDur(secsSince(job.created_at))}</b></span>`:total!=null?`<span>Took <b>${fmtDur(total)}</b></span>`:""}`;
 
-  const head = `<div class="jobhead"><div><h2>${job.mode==="topic"?esc(job.topic):"What's trending now"}</h2><div class="meta"><span>${job.mode==="topic"?"Topic research":"Trend scan"}</span><span>${esc(job.region)} · last ${job.windowH}h</span><span>${job.sources.filter(s=>s.status==="done").length}/${job.sources.length} sources</span>${job.brain?.model?`<span>brain: ${esc(job.brain.model)}</span>`:""}${job.archived_at?`<span title="Archived in the database on ${esc(new Date(job.archived_at).toLocaleString())}">✓ saved to database</span>`:""}</div>${job.brief?`<div class="brief-view"><span class="lbl">Focus</span><p>${esc(job.brief)}</p></div>`:""}</div>
+  const head = `<div class="jobhead"><div><h2>${job.mode==="topic"?esc(job.topic):"What's trending now"}</h2><div class="meta"><span>${job.mode==="topic"?"Topic research":"Trend scan"}</span><span>${esc(job.region)} · last ${job.windowH}h</span><span>${job.sources.filter(s=>s.status==="done").length}/${job.sources.length} sources</span>${job.brain?.model?`<span>brain: ${esc(job.brain.model)}</span>`:""}${job.archived_at?`<span title="Archived in the database on ${esc(new Date(job.archived_at).toLocaleString())}">✓ saved to database</span>`:""}${job.cost?`<span title="${esc(costTitle(job.cost))}">cost ${fmtUsd(job.cost.total_usd)}${job.status==="running"?" so far":""}</span>`:""}</div>${job.brief?`<div class="brief-view"><span class="lbl">Focus</span><p>${esc(job.brief)}</p></div>`:""}</div>
     <div class="topbtns"><button class="btn" id="share">Copy link</button><button class="btn" id="rerun">Run again</button>${job.brain?.status==="failed"||job.brain?.status==="skipped"?`<button class="btn primary" id="retry-brain">Analyse with AI</button>`:""}</div></div>
     ${job.error?`<div class="note err">${esc(job.error)}</div>`:""}
     <div class="progress">${job.sources.map(s => `<div class="src st-${s.status}">${logo(s.platform)}<div class="t"><b>${esc(s.label||PLAT[s.platform]?.name)}</b><span>${esc(s.actor)}</span></div><div class="r"><span class="st" title="${esc(s.error||"")}">${s.status==="running"?"running…":s.status==="done"?s.count+" rows":s.status==="empty"?"no results":s.status==="failed"?"failed":"queued"}</span>${s.status==="running"&&s.started_at?`<span class="tm" data-since="${esc(s.started_at)}" title="time since this platform's extraction started">${fmtDur(secsSince(s.started_at))}</span>`:srcDur(s)!=null?`<span class="tm" title="time this platform took to extract its results">${s.status==="failed"?"failed after":"done in"} ${fmtDur(srcDur(s))}</span>`:""}</div></div>`).join("")}</div>`;
@@ -695,17 +748,35 @@ function renderTable() {
   return filtersHTML({platforms:true}) + `<div class="tbar"><span class="sub">${rows.length} rows · click a header to sort</span><button class="btn" id="csv">Copy as TSV</button></div><div class="tblwrap"><table><thead><tr>${cols.map(([key,l])=>`<th data-k="${key}" ${k===key?`aria-sort="${d>0?"ascending":"descending"}"`:""}>${l}</th>`).join("")}</tr></thead><tbody>${rows.map(i=>`<tr><td class="num">${i.score}</td><td><a class="ext" href="${esc(linkOf(i))}" target="_blank" rel="noopener" title="${esc(openTitle(i))}">${esc(i.topic)}</a>${i.extra?`<div style="font:500 11px var(--f-mono);color:var(--muted)">${esc(i.extra)}</div>`:""}</td><td>${logo(i.platform,"xs")} ${esc(PLAT[i.platform].name)}</td><td>${esc(i.category)}</td><td class="num">${i.metric?fmt(i.metric)+" "+esc(i.metric_label):"rank "+i.rank}</td><td class="num">${i.momentum}</td><td class="num">${ago(i.age_h)}</td><td>${safetyTag(i.safety)}</td></tr>`).join("")}</tbody></table></div>`;
 }
 function renderSources() {
-  return `<div class="sec-h" style="padding-top:14px"><h2>How long each platform took</h2><span class="sub">extraction time per platform, measured by Apify</span></div>
+  return `${job.cost?`<div class="sec-h" style="padding-top:14px"><h2>What this research cost</h2><span class="sub">Apify credits per platform run (what each scraper charged) and OpenRouter credits for the AI step · USD</span></div>${costHTML()}`:""}
+  <div class="sec-h" style="padding-top:${job.cost?"4px":"14px"}"><h2>How long each platform took</h2><span class="sub">extraction time per platform, measured by Apify</span></div>
   ${timingHTML()}
   <div class="sec-h"><h2>Sources &amp; method</h2><span class="sub">what ran for this research</span></div>
-  <div class="srcs">${job.sources.map(s=>`<div class="srcbox"><div class="h">${logo(s.platform)}${esc(PLAT[s.platform].name)}<span style="margin-left:auto;font:500 12px var(--f-mono);color:${s.status==="done"?"var(--accent-ink)":"var(--crit)"}">${s.status==="done"?s.count+" rows":s.status}</span></div><dl><dt>Query</dt><dd>${esc(s.label)}</dd><dt>Actor</dt><dd><code>${esc(s.actor)}</code></dd>${s.error?`<dt>Error</dt><dd>${esc(s.error)}</dd>`:""}${srcDur(s)!=null?`<dt>Took</dt><dd>${fmtDur(srcDur(s))}</dd>`:s.status==="running"?`<dt>Running</dt><dd><span class="tm" data-since="${esc(s.started_at)}">${fmtDur(secsSince(s.started_at))}</span></dd>`:""}</dl></div>`).join("")}</div>
+  <div class="srcs">${job.sources.map(s=>`<div class="srcbox"><div class="h">${logo(s.platform)}${esc(PLAT[s.platform].name)}<span style="margin-left:auto;font:500 12px var(--f-mono);color:${s.status==="done"?"var(--accent-ink)":"var(--crit)"}">${s.status==="done"?s.count+" rows":s.status}</span></div><dl><dt>Query</dt><dd>${esc(s.label)}</dd><dt>Actor</dt><dd><code>${esc(s.actor)}</code></dd>${s.error?`<dt>Error</dt><dd>${esc(s.error)}</dd>`:""}${srcDur(s)!=null?`<dt>Took</dt><dd>${fmtDur(srcDur(s))}</dd>`:s.status==="running"?`<dt>Running</dt><dd><span class="tm" data-since="${esc(s.started_at)}">${fmtDur(secsSince(s.started_at))}</span></dd>`:""}${s.cost?.usd!=null?`<dt>Cost</dt><dd>${fmtUsd(s.cost.usd)} · ${esc(costDetail(s.cost))}</dd>`:""}</dl></div>`).join("")}</div>
   <div class="prose"><h2>How the score works</h2><p>Every result gets 0–100 from <b>reach</b> (rank inside its own platform), <b>momentum</b> (how fresh it is, Google growth %, TikTok trend direction, Pinterest week-over-week) and a small platform weight. A signal adds <b>breadth</b> (+12 per extra platform, +4 for a second region) and a volume bonus for very large numbers, then subtracts 25 for <i>caution</i> and 60 for <i>avoid</i>.</p>
   <h2>The AI layer</h2><p>When all sources are in, the results are sent to a language model (via OpenRouter) that groups them into signals, drops off-topic noise, writes the "why now" with numbers, proposes content angles and flags brand safety. It sees only titles, captions, metrics and ages, never full pages.</p>
-  <h2>Limits</h2><p>Topic mode searches each platform for your words, so a vague topic returns vague results; add a brand or a place to sharpen it. TikTok and Instagram date filters are approximate. X hides volumes for trends. Costs: about $0.30–0.60 in Apify credits per research plus a few cents of model usage.</p></div>`;
+  <h2>Limits</h2><p>Topic mode searches each platform for your words, so a vague topic returns vague results; add a brand or a place to sharpen it. TikTok and Instagram date filters are approximate. X hides volumes for trends. Costs: every run's exact Apify and model charges are recorded — see "What this research cost" above and the cost tracker on the History page.</p></div>`;
 }
 /* ---------- timing ---------- */
 const secsSince = iso => iso ? Math.max(0, Math.round((Date.now() - new Date(iso)) / 1000)) : 0;
 function fmtDur(s) { if (s == null) return ""; s = Math.round(s); return s < 60 ? `${s}s` : `${Math.floor(s/60)}m ${String(s%60).padStart(2,"0")}s`; }
+/* ---------- cost tracker ---------- */
+// Every research records what it cost: Apify credits per platform run (what the actor charged for that run) and OpenRouter credits for the AI step, in USD.
+function fmtUsd(n, dash = "—") { if (n == null || isNaN(n)) return dash; n = Number(n); if (n === 0) return "$0.00"; if (n < 0.0005) return "<$0.001"; return "$" + (n < 0.01 ? n.toFixed(3) : n.toFixed(2)); }
+function costDetail(c) { const d = c?.detail; if (!d) return "platform usage"; if (d.items != null) return `${d.items} items × ${fmtUsd(d.price_usd)}`; const ents = Object.entries(d).filter(([, v]) => v && typeof v === "object"); return ents.length ? ents.map(([k, v]) => `${v.count} ${k}${v.count === 1 ? "" : "s"} × ${fmtUsd(v.price_usd)}`).join(", ") : "platform usage"; }
+function costTitle(c) { if (!c) return ""; const bits = [`Scrapers (Apify): ${fmtUsd(c.apify_usd)}`, c.brain_usd != null ? `AI model (OpenRouter): ${fmtUsd(c.brain_usd)}` : c.brain_pending ? "AI model: pending" : c.brain_tracked === false && job?.brain?.status === "done" ? "AI model: not recorded (older research)" : "AI model: —"]; if (c.sources_untracked) bits.push(`${c.sources_untracked} platform run${c.sources_untracked>1?"s":""} without cost data`); return bits.join(" · "); }
+function costHTML() {
+  const c = job.cost; if (!c) return "";
+  const rows = job.sources.map(s => ({ name: PLAT[s.platform]?.name || s.platform, platform: s.platform, usd: s.cost?.usd ?? null, status: s.cost?.usd != null ? s.status : "none",
+    note: s.cost?.usd != null ? costDetail(s.cost) : s.status === "running" ? "running…" : s.status === "failed" && !s.runId ? "did not start" : "no cost data" }));
+  if (job.brain?.status === "running" || job.brain?.status === "done" || job.brain?.status === "failed") rows.push({ name: "AI analysis", brain: true, usd: job.brain.cost_usd ?? null, status: job.brain.cost_usd != null ? "done" : "none", note: job.brain.cost_usd != null ? `${job.brain.model ? job.brain.model.split("/").pop() + " · " : ""}${job.brain.prompt_tokens != null ? `${fmt(job.brain.prompt_tokens)} in / ${fmt(job.brain.completion_tokens||0)} out tokens` : ""}` : job.brain.status === "running" ? "running…" : "cost not recorded" });
+  const max = Math.max(0.000001, ...rows.map(r => r.usd || 0));
+  const top = rows.filter(r => r.usd != null && !r.brain).sort((a,b) => b.usd - a.usd)[0];
+  return `<div class="timing cost">
+    ${rows.map(r => `<div class="row ${r.brain?"brain":""} st-${r.status}"><span class="nm">${r.brain?"🧠":logo(r.platform,"xs")}${esc(r.name)}</span><div class="bar" title="${esc(r.note)}"><i style="width:${Math.max(2, Math.round(100*(r.usd||0)/max))}%"></i></div><span class="v" title="${esc(r.note)}">${r.usd != null ? fmtUsd(r.usd) : "—"}</span></div>`).join("")}
+    <div class="tot"><span>${top ? `Most expensive platform: <b>${esc(top.name)}</b> (${fmtUsd(top.usd)}) · ` : ""}Scrapers <b>${fmtUsd(c.apify_usd)}</b>${c.brain_usd != null ? ` · AI <b>${fmtUsd(c.brain_usd)}</b>` : c.brain_pending ? " · AI pending" : job.brain?.status === "done" ? " · AI cost not recorded" : ""}${c.sources_untracked ? ` · ${c.sources_untracked} run${c.sources_untracked>1?"s":""} without cost data` : ""}</span><span>${job.status==="running"?"So far":"Total"} <b>${fmtUsd(c.total_usd)}</b></span></div>
+  </div>`;
+}
 function srcDur(s) { if (s.duration_s != null) return s.duration_s; if (s.started_at && s.finished_at) return Math.max(1, Math.round((new Date(s.finished_at) - new Date(s.started_at)) / 1000)); return null; }
 function brainDur() { const b = job?.brain; if (!b?.started_at) return null; if (b.status === "running") return secsSince(b.started_at); return b.finished_at ? Math.max(1, Math.round((new Date(b.finished_at) - new Date(b.started_at)) / 1000)) : null; }
 function totalDur() { if (!job?.created_at) return null; if (job.status === "running") return secsSince(job.created_at); const end = job.completed_at || job.updated_at; return end ? Math.max(1, Math.round((new Date(end) - new Date(job.created_at)) / 1000)) : null; }
