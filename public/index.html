@@ -68,10 +68,26 @@ nav.tabs a .n{font:500 11px var(--f-mono);color:var(--muted);margin-left:5px}
 .hero h2{font:400 clamp(34px,6vw,58px)/1.05 var(--f-display);letter-spacing:-.015em}
 .hero h2 em{font-style:italic;color:var(--accent)}
 .hero p{font-size:16px;color:var(--ink-2);max-width:60ch;margin:14px 0 0}
-.search{display:flex;gap:8px;margin-top:22px;background:var(--surface);border:1px solid var(--line-2);border-radius:14px;padding:6px;box-shadow:var(--shadow)}
+.sform{display:grid;grid-template-columns:minmax(0,1fr);gap:10px;margin-top:22px}
+.search{display:flex;gap:8px;background:var(--surface);border:1px solid var(--line-2);border-radius:14px;padding:6px;box-shadow:var(--shadow)}
+.search:focus-within,.brief:focus-within{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft),var(--shadow)}
 .search input{flex:1;min-width:0;border:0;background:none;font:500 17px var(--f-ui);padding:10px 12px;color:var(--ink)}
 .search input::placeholder{color:var(--muted)}
 .search .btn{border-radius:10px;padding:10px 18px;font-size:14px}
+/* focus brief: same width as the search bar; a longer description of the angle the AI should keep */
+.brief{background:var(--surface);border:1px solid var(--line-2);border-radius:14px;padding:10px 14px 8px;box-shadow:var(--shadow);display:grid;grid-template-columns:minmax(0,1fr);gap:4px;min-width:0}
+.brief .bh{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.brief .bh{flex-wrap:nowrap} .brief .bh .lbl{color:var(--accent-ink);flex:none} .brief .bh .opt{font:500 11px var(--f-mono);color:var(--muted);flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.brief .bh .cnt{flex:none;margin-left:auto;font:500 11px var(--f-mono);color:var(--muted);font-variant-numeric:tabular-nums} .brief .bh .cnt.max{color:var(--crit)}
+@media (max-width:600px){.brief .bhint .kbdhint{display:none}}
+.brief textarea{width:100%;border:0;background:none;resize:none;font:500 15px/1.5 var(--f-ui);color:var(--ink);padding:4px 0 2px;min-height:64px;max-height:320px;overflow:auto;field-sizing:content}
+.brief textarea::placeholder{color:var(--muted);font-weight:400}
+.brief .bhint{font-size:12px;color:var(--muted);display:flex;flex-wrap:wrap;gap:4px 14px;justify-content:space-between;padding-top:6px;border-top:1px dashed var(--line)}
+.brief .bhint kbd{font:500 10.5px var(--f-mono);border:1px solid var(--line-2);border-bottom-width:2px;border-radius:4px;padding:0 4px;color:var(--ink-2)}
+.brief-view{margin-top:10px;max-width:86ch;display:grid;grid-template-columns:auto 1fr;gap:10px;align-items:start;padding:10px 14px;border-radius:12px;background:var(--accent-soft);border:1px solid color-mix(in srgb,var(--accent) 30%,var(--line))}
+.brief-view .lbl{color:var(--accent-ink);padding-top:3px} .brief-view p{margin:0;font-size:13.5px;line-height:1.5;color:var(--ink)}
+/* every result opens on its platform: show it on hover */
+a.ext{text-decoration:none} a.ext::after{content:"↗";font:600 10px var(--f-mono);margin-left:4px;color:var(--accent);opacity:0;transition:opacity .15s} a.ext:hover::after,a.ext:focus-visible::after{opacity:1}
 .opts{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:12px}
 .seg{display:inline-flex;background:var(--surface-2);border-radius:9px;padding:3px}
 .seg button{border:0;background:none;padding:6px 11px;border-radius:7px;font-weight:600;color:var(--ink-2);cursor:pointer}
@@ -91,7 +107,7 @@ nav.tabs a .n{font:500 11px var(--f-mono);color:var(--muted);margin-left:5px}
 .rcard:hover{border-color:var(--accent)}
 .rcard .t{font-weight:700;font-size:15px}
 .rcard .m{font:500 11.5px var(--f-mono);color:var(--muted)}
-.rcard .s{font-size:12.5px;color:var(--ink-2)}
+.rcard .s{font-size:12.5px;color:var(--ink-2)} .rcard .f{font-size:12px;color:var(--accent-ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .empty{border:2px dashed var(--line-2);border-radius:14px;padding:28px 18px;text-align:center;color:var(--muted);font-size:13.5px}
 .empty b{display:block;color:var(--ink);font:400 22px var(--f-display);margin-bottom:6px}
 .note{background:var(--warn-bg);color:var(--ink);border:1px solid color-mix(in srgb,var(--warn) 40%,var(--line));border-radius:10px;padding:10px 14px;font-size:13px;margin:12px 0}
@@ -239,6 +255,43 @@ td a{color:var(--ink);text-decoration:none} td a:hover{text-decoration:underline
 .modal .help{font-size:12.5px;color:var(--muted);font-weight:400}
 .modal fieldset{border:1px solid var(--line);border-radius:12px;padding:12px 14px;display:grid;gap:10px;margin:0}
 .modal legend{font:600 11.5px var(--f-mono);text-transform:uppercase;letter-spacing:.06em;color:var(--muted);padding:0 6px}
+/* loading veil: translucent screen shown while a research runs; fades out the moment results are ready */
+.veil{position:fixed;inset:0;z-index:35;display:grid;place-items:center;padding:16px;background:color-mix(in srgb,var(--bg) 72%,transparent);backdrop-filter:blur(10px) saturate(1.15);-webkit-backdrop-filter:blur(10px) saturate(1.15);opacity:1;transition:opacity .45s ease}
+.veil.out{opacity:0;pointer-events:none}
+.vcard{width:min(620px,100%);background:color-mix(in srgb,var(--surface) 94%,transparent);border:1px solid var(--line);border-radius:22px;box-shadow:0 40px 90px -30px rgba(21,26,23,.45),var(--shadow);padding:24px 24px 18px;display:grid;gap:16px;animation:veil-in .5s cubic-bezier(.2,.8,.2,1)}
+@keyframes veil-in{from{opacity:0;transform:translateY(16px) scale(.985)}}
+.vtop{display:flex;gap:18px;align-items:center}
+.vhead{min-width:0;flex:1}
+.vhead h2{font:400 clamp(22px,3.6vw,30px)/1.15 var(--f-display);letter-spacing:-.01em;overflow-wrap:anywhere}
+.vhead h2 em{font-style:italic;color:var(--accent)}
+.vhead .ph{display:flex;flex-wrap:wrap;gap:4px 12px;align-items:center;font:500 12.5px var(--f-mono);color:var(--muted);margin-top:7px}
+.vhead .ph b{color:var(--ink);font-weight:600} .vhead .ph .tm{color:var(--flare);font-variant-numeric:tabular-nums}
+.sweep{width:96px;height:96px;flex:none;position:relative}
+.sweep svg{width:100%;height:100%;overflow:visible}
+.sweep .ring{fill:none;stroke:var(--accent);opacity:.32} .sweep .cross{stroke:var(--accent);opacity:.18}
+.sweep .beam{transform-origin:50% 50%;animation:spin 2.6s linear infinite}
+.sweep .blip{fill:var(--flare);transform-box:fill-box;transform-origin:center;animation:blip 2.6s ease-out infinite}
+.sweep .b2{animation-delay:.9s} .sweep .b3{animation-delay:1.7s}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes blip{0%,12%{opacity:0;transform:scale(.4)}22%{opacity:1;transform:scale(1.15)}65%{opacity:.45;transform:scale(1)}100%{opacity:0;transform:scale(.8)}}
+.vbar{height:6px;border-radius:4px;background:var(--surface-2);overflow:hidden}
+.vbar i{display:block;height:100%;border-radius:4px;background:linear-gradient(90deg,var(--accent),var(--flare));transition:width .7s ease;min-width:3%}
+.vbar.indet i{width:38%!important;animation:slide 1.3s ease-in-out infinite}
+@keyframes slide{0%{transform:translateX(-110%)}100%{transform:translateX(290%)}}
+.vlist{display:grid;grid-template-columns:repeat(auto-fill,minmax(255px,1fr));gap:2px 12px;max-height:min(42vh,340px);overflow:auto;margin:0 -8px}
+.vrow{display:flex;align-items:center;gap:9px;padding:7px 8px;border-radius:9px;font-size:13px;min-width:0}
+.vrow .nm{font-weight:600;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.vrow .vs{font:500 11.5px var(--f-mono);color:var(--muted);white-space:nowrap;font-variant-numeric:tabular-nums}
+.vrow.st-running .vs{color:var(--flare)} .vrow.st-done .vs{color:var(--good)} .vrow.st-failed .vs,.vrow.st-empty .vs{color:var(--crit)}
+.vrow .ic{width:15px;height:15px;border-radius:50%;flex:none;display:grid;place-items:center;font:800 9.5px var(--f-mono)}
+.vrow .ic.sp{border:2px solid var(--line-2);border-top-color:var(--flare);animation:spin .8s linear infinite}
+.vrow .ic.ok{background:var(--good-bg);color:var(--good)} .vrow .ic.no{background:var(--crit-bg);color:var(--crit)} .vrow .ic.qd{border:2px dashed var(--line-2)}
+.vrow.brain{grid-column:1/-1;border-top:1px dashed var(--line);margin-top:6px;padding-top:11px;border-radius:0}
+.vrow.brain .nm{flex:none;max-width:60%} .vrow.brain .vs{margin-left:auto;white-space:normal;text-align:right}
+.vrow .ai{width:18px;height:18px;border-radius:5px;background:var(--flare-soft);color:var(--flare);display:grid;place-items:center;font:800 8.5px var(--f-mono);flex:none}
+.vfoot{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:6px 12px;font-size:12.5px;color:var(--muted);border-top:1px solid var(--line);padding-top:12px}
+.vfoot .btn{padding:6px 8px}
+@media (max-width:520px){.vcard{padding:18px 16px 14px}.vtop{gap:12px}.sweep{width:68px;height:68px}}
 .toast{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:9px 14px;border-radius:9px;font-weight:600;font-size:13px;box-shadow:var(--shadow);z-index:50}
 footer{padding:36px 0 30px;color:var(--muted);font-size:12.5px;display:flex;flex-wrap:wrap;gap:8px 20px;justify-content:space-between}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
@@ -287,6 +340,12 @@ const fmt = n => { if (n == null || n === "") return ""; n = +n; if (!isFinite(n
 const ago = h => h == null ? "" : h < 1 ? "<1h" : h < 48 ? Math.round(h)+"h" : Math.round(h/24)+"d";
 const tag = (t, cls="") => `<span class="tag ${cls}">${esc(t)}</span>`;
 const safetyTag = s => tag(s === "safe" ? "brand-safe" : s === "caution" ? "caution" : "avoid", s);
+// Every result must open somewhere real: a scraped URL when it is a proper link, otherwise the platform's own search for it.
+const SEARCH_URL = { news:"https://news.google.com/search?q=", google:"https://www.google.com/search?q=", youtube:"https://www.youtube.com/results?search_query=", reddit:"https://www.reddit.com/search/?q=", x:"https://x.com/search?q=", tiktok:"https://www.tiktok.com/search?q=", instagram:"https://www.instagram.com/explore/search/keyword/?q=", pinterest:"https://www.pinterest.com/search/pins/?q=" };
+const linkOf = i => /^https?:\/\//i.test(i?.url || "") ? i.url : (SEARCH_URL[i?.platform] || SEARCH_URL.google) + encodeURIComponent(i?.topic || "");
+const openTitle = i => `Open on ${PLAT[i?.platform]?.name || "the web"}`;
+const trendsUrl = (topic, region, windowH) => `https://trends.google.com/trends/explore?date=${windowH <= 24 ? "now%201-d" : "now%207-d"}${region && region !== "Global" ? "&geo=" + region : ""}&q=${encodeURIComponent(topic || "")}`;
+const BRIEF_MAX = 1500;
 
 /* ---------- settings (localStorage) ---------- */
 const SETTINGS_KEY = "tr-settings";
@@ -306,7 +365,7 @@ async function api(path, opts={}) {
 /* ---------- state ---------- */
 let health = null, job = null, pollTimer = null;
 let state = { view:"radar", q:"", cats:new Set(), safeOnly:false, plats:new Set(), expanded:new Set(), sort:{k:"score",d:-1}, showOff:false };
-let form = { mode:"topic", topic:"", region:"US", windowH:24, plats:new Set(TOPIC_PLATS) };
+let form = { mode:"topic", topic:"", brief:"", region:"US", windowH:24, plats:new Set(TOPIC_PLATS) };
 let pins = []; try { pins = JSON.parse(localStorage.getItem("tr-pins") || "[]"); } catch {}
 const savePins = () => { try { localStorage.setItem("tr-pins", JSON.stringify(pins)); } catch {} $("#shortlist-n").textContent = pins.length; };
 
@@ -337,16 +396,23 @@ $("#home-link").addEventListener("click", e => { e.preventDefault(); stopPolling
 
 /* ---------- home ---------- */
 async function renderHome() {
-  $("#tabs").hidden = true; $("#status").innerHTML = "";
+  $("#tabs").hidden = true; $("#status").innerHTML = ""; renderVeil();
   const m = $("#main");
   const plats = form.mode === "topic" ? TOPIC_PLATS : TREND_PLATS;
   m.innerHTML = `
   <section class="hero">
     <h2>What is the internet saying about <em>this</em>, right now?</h2>
     <p>Type a topic, a brand, a theme. Trend Radar searches Google News, Google Trends, Reddit, YouTube, X, TikTok and Instagram for the last ${form.windowH}h, groups what it finds into signals, and writes the content angles a marketer can act on today.</p>
-    <form class="search" id="form" role="search">
-      <input id="topic" type="search" placeholder="${form.mode==="topic"?"e.g. AI automation, skincare, IPL, Diwali gifting…":"Trending now: no topic needed"}" value="${esc(form.topic)}" ${form.mode==="topic"?"":"disabled"} aria-label="Topic" autocomplete="off">
-      <button class="btn primary" type="submit" id="run">${form.mode==="topic"?"Research":"Scan trends"} →</button>
+    <form class="sform" id="form" role="search">
+      <div class="search">
+        <input id="topic" type="search" placeholder="${form.mode==="topic"?"e.g. AI automation, skincare, IPL, Diwali gifting…":"Trending now: no topic needed"}" value="${esc(form.topic)}" ${form.mode==="topic"?"":"disabled"} aria-label="Topic" autocomplete="off">
+        <button class="btn primary" type="submit" id="run">${form.mode==="topic"?"Research":"Scan trends"} →</button>
+      </div>
+      ${form.mode==="topic"?`<div class="brief">
+        <div class="bh"><span class="lbl">Focus</span><span class="opt">optional · narrows the results to one angle of the topic</span><span class="cnt" id="brief-n">${form.brief.length}/${BRIEF_MAX}</span></div>
+        <textarea id="brief" maxlength="${BRIEF_MAX}" aria-label="Focus: describe the angle of the topic you care about" placeholder="Describe, in as much detail as you like, which side of this topic you want. Example: “Running shoes for marathon training — new launches, athlete endorsements, price reactions and reviews. Not interested in casual sneaker fashion or resale.”">${esc(form.brief)}</textarea>
+        <div class="bhint"><span>The platforms are searched for the topic only; the AI then keeps the results that match this focus and builds the signals around it.</span><span class="kbdhint"><kbd>Ctrl</kbd>+<kbd>Enter</kbd> to run</span></div>
+      </div>`:""}
     </form>
     <div class="opts">
       <span class="lbl">Mode</span><div class="seg"><button type="button" data-mode="topic" aria-pressed="${form.mode==="topic"}">Research a topic</button><button type="button" data-mode="trending" aria-pressed="${form.mode==="trending"}">What's trending now</button></div>
@@ -359,7 +425,14 @@ async function renderHome() {
   </section>
   <section class="recent"><div class="sec-h"><h3>Recent research</h3><span class="sub" id="recent-sub"></span></div><div id="recent"><div class="empty">Loading…</div></div></section>`;
 
-  m.querySelector("#form").addEventListener("submit", e => { e.preventDefault(); form.topic = m.querySelector("#topic").value; startResearch(); });
+  m.querySelector("#form").addEventListener("submit", e => { e.preventDefault(); form.topic = m.querySelector("#topic").value; form.brief = (m.querySelector("#brief")?.value || "").trim(); startResearch(); });
+  const briefEl = m.querySelector("#brief");
+  if (briefEl) {
+    const grow = () => { briefEl.style.height = "auto"; briefEl.style.height = Math.min(320, briefEl.scrollHeight) + "px"; const n = m.querySelector("#brief-n"); n.textContent = `${briefEl.value.length}/${BRIEF_MAX}`; n.classList.toggle("max", briefEl.value.length >= BRIEF_MAX); };
+    briefEl.addEventListener("input", () => { form.brief = briefEl.value; grow(); });
+    briefEl.addEventListener("keydown", e => { if ((e.ctrlKey || e.metaKey) && e.key === "Enter") { e.preventDefault(); m.querySelector("#form").requestSubmit(); } });
+    grow();
+  }
   m.querySelectorAll("[data-mode]").forEach(b => b.addEventListener("click", () => { form.mode = b.dataset.mode; form.plats = new Set(form.mode==="topic"?TOPIC_PLATS:TREND_PLATS); renderHome(); }));
   m.querySelectorAll("[data-region]").forEach(b => b.addEventListener("click", () => { form.region = b.dataset.region; renderHome(); }));
   m.querySelectorAll("[data-window]").forEach(b => b.addEventListener("click", () => { form.windowH = +b.dataset.window; renderHome(); }));
@@ -376,18 +449,21 @@ async function loadRecent() {
   try {
     const { jobs, key_source } = await api("/api/jobs");
     $("#recent-sub").textContent = key_source === "byo" ? "from your Apify account" : "shared on this site";
-    box.innerHTML = jobs.length ? `<div class="rgrid">${jobs.slice(0,24).map(j => `<button class="rcard" data-open="${j.id}"><span class="t">${esc(j.topic)}</span><span class="m">${esc(j.region)} · ${j.windowH}h · ${new Date(j.created_at).toLocaleString([], {dateStyle:"medium", timeStyle:"short"})} · ${j.status==="running"?"running":j.n_items+" results"}</span>${j.top?`<span class="s">Top signal: ${esc(j.top)}</span>`:""}</button>`).join("")}</div>` : `<div class="empty"><b>No research yet</b>Your first run will appear here, and every run gets a shareable link.</div>`;
+    box.innerHTML = jobs.length ? `<div class="rgrid">${jobs.slice(0,24).map(j => `<button class="rcard" data-open="${j.id}"><span class="t">${esc(j.topic)}</span>${j.brief?`<span class="f" title="${esc(j.brief)}">Focus: ${esc(j.brief)}</span>`:""}<span class="m">${esc(j.region)} · ${j.windowH}h · ${new Date(j.created_at).toLocaleString([], {dateStyle:"medium", timeStyle:"short"})} · ${j.status==="running"?"running":j.n_items+" results"}</span>${j.top?`<span class="s">Top signal: ${esc(j.top)}</span>`:""}</button>`).join("")}</div>` : `<div class="empty"><b>No research yet</b>Your first run will appear here, and every run gets a shareable link.</div>`;
     box.querySelectorAll("[data-open]").forEach(b => b.addEventListener("click", () => go("/r/"+b.dataset.open)));
   } catch (e) { box.innerHTML = `<div class="empty">${esc(e.message)}</div>`; }
 }
 async function startResearch({ fresh = false } = {}) {
   const btn = $("#run"); if (btn) { btn.disabled = true; btn.textContent = "Starting…"; }
+  if (form.mode === "topic" && form.topic.trim().length < 2) { const note = $("#home-note"); if (note) note.innerHTML = `<div class="note err">Enter a topic to research.</div>`; if (btn) { btn.disabled = false; btn.textContent = "Research →"; } $("#topic")?.focus(); return; }
+  renderVeil({ topic: form.mode === "topic" ? form.topic.trim() : "what's trending now", plats: [...form.plats] }); // instant feedback, before the job exists
   try {
-    const { job: j, reused } = await api("/api/research", { method:"POST", body: JSON.stringify({ mode: form.mode, topic: form.topic, region: form.region, windowH: form.windowH, platforms: [...form.plats], fresh }) });
+    const { job: j, reused } = await api("/api/research", { method:"POST", body: JSON.stringify({ mode: form.mode, topic: form.topic, brief: form.mode === "topic" ? form.brief : "", region: form.region, windowH: form.windowH, platforms: [...form.plats], fresh }) });
     job = j; go("/r/"+j.id);
     if (reused) toast(`Showing a research from ${sinceText(j.created_at)} — no credits spent. Use “Run again” for a fresh one.`, 5000);
   } catch (e) {
-    const note = $("#home-note"); if (note) note.innerHTML = `<div class="note err">${esc(e.message)}</div>`; else toast(e.message);
+    renderVeil();
+    const note = $("#home-note"); if (note) note.innerHTML = `<div class="note err">${esc(e.message)}</div>`; else toast(e.message, 4000);
     if (btn) { btn.disabled = false; btn.textContent = form.mode==="topic"?"Research →":"Scan trends →"; }
   }
 }
@@ -396,7 +472,11 @@ async function startResearch({ fresh = false } = {}) {
 async function loadJob(id) {
   if (!job || job.id !== id) { $("#main").innerHTML = `<div class="empty" style="margin-top:40px"><b>Loading research…</b></div>`; job = null; }
   try { const r = await fetchJobLive(id, "/api/job?id="+id); job = r.job; renderJob(); schedulePoll(); }
-  catch (e) { $("#main").innerHTML = `<div class="note err" style="margin-top:30px">${esc(e.message)} <button class="btn ghost" onclick="location.href='/'">Back</button></div>`; }
+  catch (e) {
+    if (job?.id === id && job.status === "running" && e.status !== 404) { toast("Connection hiccup — retrying…", 2500); schedulePoll(); return; } // keep the veil + polling alive through a transient error
+    renderVeil();
+    $("#main").innerHTML = `<div class="note err" style="margin-top:30px">${esc(e.message)} <button class="btn ghost" onclick="location.href='/'">Back</button></div>`;
+  }
 }
 function schedulePoll() { stopPolling(); if (job?.status === "running" || job?.brain?.status === "running") pollTimer = setTimeout(() => loadJob(job.id), 3500); }
 function stopPolling() { clearTimeout(pollTimer); pollTimer = null; }
@@ -439,7 +519,7 @@ function renderJob() {
   const total = totalDur();
   $("#status").innerHTML = `<span><span class="dot${running?" run":""}"></span>${running?"Running":"Done"} <b>${when.toLocaleString([], {dateStyle:"medium", timeStyle:"short"})}</b></span><span>Window <b>${job.windowH}h</b></span><span>Region <b>${esc(job.region)}</b></span><span><b>${items().length}</b> results</span>${running?`<span>Elapsed <b class="tm" data-since="${esc(job.created_at)}">${fmtDur(secsSince(job.created_at))}</b></span>`:total!=null?`<span>Took <b>${fmtDur(total)}</b></span>`:""}`;
 
-  const head = `<div class="jobhead"><div><h2>${job.mode==="topic"?esc(job.topic):"What's trending now"}</h2><div class="meta"><span>${job.mode==="topic"?"Topic research":"Trend scan"}</span><span>${esc(job.region)} · last ${job.windowH}h</span><span>${job.sources.filter(s=>s.status==="done").length}/${job.sources.length} sources</span>${job.brain?.model?`<span>brain: ${esc(job.brain.model)}</span>`:""}</div></div>
+  const head = `<div class="jobhead"><div><h2>${job.mode==="topic"?esc(job.topic):"What's trending now"}</h2><div class="meta"><span>${job.mode==="topic"?"Topic research":"Trend scan"}</span><span>${esc(job.region)} · last ${job.windowH}h</span><span>${job.sources.filter(s=>s.status==="done").length}/${job.sources.length} sources</span>${job.brain?.model?`<span>brain: ${esc(job.brain.model)}</span>`:""}</div>${job.brief?`<div class="brief-view"><span class="lbl">Focus</span><p>${esc(job.brief)}</p></div>`:""}</div>
     <div class="topbtns"><button class="btn" id="share">Copy link</button><button class="btn" id="rerun">Run again</button>${job.brain?.status==="failed"||job.brain?.status==="skipped"?`<button class="btn primary" id="retry-brain">Analyse with AI</button>`:""}</div></div>
     ${job.error?`<div class="note err">${esc(job.error)}</div>`:""}
     <div class="progress">${job.sources.map(s => `<div class="src st-${s.status}">${logo(s.platform)}<div class="t"><b>${esc(s.label||PLAT[s.platform]?.name)}</b><span>${esc(s.actor)}</span></div><div class="r"><span class="st" title="${esc(s.error||"")}">${s.status==="running"?"running…":s.status==="done"?s.count+" rows":s.status==="empty"?"no results":s.status==="failed"?"failed":"queued"}</span>${s.status==="running"&&s.started_at?`<span class="tm" data-since="${esc(s.started_at)}" title="time since this platform's extraction started">${fmtDur(secsSince(s.started_at))}</span>`:srcDur(s)!=null?`<span class="tm" title="time this platform took to extract its results">${s.status==="failed"?"failed after":"done in"} ${fmtDur(srcDur(s))}</span>`:""}</div></div>`).join("")}</div>`;
@@ -451,6 +531,7 @@ function renderJob() {
 
   const body = ({ radar: renderRadar, platforms: renderPlatforms, table: renderTable, sources: renderSources }[state.view] || renderRadar)();
   $("#main").innerHTML = head + brainBox + body;
+  renderVeil();
   bindJob();
 }
 function filtersHTML(opts={}) {
@@ -458,7 +539,7 @@ function filtersHTML(opts={}) {
   const cats = CAT_ORDER.filter(c => counts[c]); const pc = {}; items().forEach(i => pc[i.platform] = (pc[i.platform]||0)+1);
   return `<div class="filters"><input id="q" type="search" placeholder="Filter results…" value="${esc(state.q)}" aria-label="Filter">
     <label class="toggle"><input type="checkbox" id="safe" ${state.safeOnly?"checked":""}> Brand-safe only</label>
-    ${job.stats?.offtopic?`<label class="toggle"><input type="checkbox" id="showoff" ${state.showOff?"checked":""}> Show ${job.stats.offtopic} off-topic</label>`:""}
+    ${job.stats?.offtopic?`<label class="toggle" title="${job.brief?"Results the AI judged outside your focus brief":"Results the AI judged unrelated to the topic"}"><input type="checkbox" id="showoff" ${state.showOff?"checked":""}> Show ${job.stats.offtopic} ${job.brief?"outside the focus":"off-topic"}</label>`:""}
     ${opts.platforms?`<div class="chips">${Object.keys(PLAT).filter(p=>pc[p]).map(p=>`<button class="chip" data-fplat="${p}" aria-pressed="${state.plats.has(p)}">${logo(p,"xs")}${PLAT[p].name}<span class="n">${pc[p]}</span></button>`).join("")}</div>`:""}</div>
     <div class="catrow">${cats.map(c=>`<button class="chip" data-cat="${esc(c)}" aria-pressed="${state.cats.has(c)}">${esc(c)}<span class="n">${counts[c]}</span></button>`).join("")}</div>`;
 }
@@ -482,10 +563,10 @@ function renderRadar() {
     <div class="sec-h"><h2>Signals</h2><span class="sub">ranked by reach × breadth × momentum, brand safety applied</span></div>
     ${cl.length ? `<div class="sigs">${cl.map(sigCard).join("")}</div>` : job.status==="running" ? `<div class="empty"><b>Collecting…</b>Signals appear when every platform has answered and the AI has grouped the results.</div>` : `<div class="empty"><b>No signals</b>${job.brain?.status==="skipped"||job.brain?.status==="failed"?"Add an OpenRouter key in Settings and press “Analyse with AI”, or browse the raw results under Platforms.":"Nothing matches these filters."}</div>`}
   </section><aside class="rail">
-    ${job.series?`<div class="panel"><h3>Search interest</h3><p class="hint">${esc(job.series.label)} · Google Trends, 0–100</p>${seriesChart(job.series)}</div>`:""}
+    ${job.series?`<div class="panel"><h3>Search interest</h3><p class="hint">${esc(job.series.label)} · Google Trends, 0–100</p>${seriesChart(job.series)}<p class="hint" style="margin:8px 0 0"><a class="ext" href="${esc(trendsUrl(job.topic, job.region, job.windowH))}" target="_blank" rel="noopener" style="color:var(--accent-ink);font-weight:600">Open in Google Trends</a></p></div>`:""}
     <div class="panel"><h3>Category mix</h3><p class="hint">Results per category</p><div class="bars">${catRows.map(([c,n])=>`<div class="bar" title="${esc(c)}: ${n} (${Math.round(100*n/Math.max(its.length,1))}%)"><span class="lbl">${esc(c)}</span><span class="trk"><span class="fill" style="width:${(100*n/catMax).toFixed(1)}%"></span></span><span class="val">${n}</span></div>`).join("")||`<span class="hint">No results yet</span>`}</div></div>
-    ${tt.length?`<div class="panel"><h3>TikTok momentum</h3><p class="hint">7-day interest curves</p><ul class="plist">${tt.map(i=>`<li>${logo("tiktok")}<div class="t"><a href="${esc(i.url)}" target="_blank" rel="noopener" style="text-decoration:none">${esc(i.topic)}</a><small>${fmt(i.metric)} views · ${i.direction}</small></div>${spark(i.curve,i.direction)}</li>`).join("")}</ul></div>`:""}
-    <div class="panel"><h3>Leader per platform</h3><ul class="plist">${Object.keys(PLAT).filter(p=>byPlat[p]).map(p=>{const i=byPlat[p].sort((a,b)=>a.rank-b.rank)[0]; return `<li>${logo(p)}<div class="t"><a href="${esc(i.url)}" target="_blank" rel="noopener" style="text-decoration:none">${esc(i.topic)}</a><small>${esc(PLAT[p].name)}${i.metric?` · ${fmt(i.metric)} ${esc(i.metric_label)}`:""}</small></div><span class="n">${byPlat[p].length}</span></li>`;}).join("")||`<li class="hint">No results yet</li>`}</ul></div>
+    ${tt.length?`<div class="panel"><h3>TikTok momentum</h3><p class="hint">7-day interest curves</p><ul class="plist">${tt.map(i=>`<li>${logo("tiktok")}<div class="t"><a class="ext" href="${esc(linkOf(i))}" target="_blank" rel="noopener" title="${esc(openTitle(i))}">${esc(i.topic)}</a><small>${fmt(i.metric)} views · ${i.direction}</small></div>${spark(i.curve,i.direction)}</li>`).join("")}</ul></div>`:""}
+    <div class="panel"><h3>Leader per platform</h3><ul class="plist">${Object.keys(PLAT).filter(p=>byPlat[p]).map(p=>{const i=byPlat[p].sort((a,b)=>a.rank-b.rank)[0]; return `<li>${logo(p)}<div class="t"><a class="ext" href="${esc(linkOf(i))}" target="_blank" rel="noopener" title="${esc(openTitle(i))}">${esc(i.topic)}</a><small>${esc(PLAT[p].name)}${i.metric?` · ${fmt(i.metric)} ${esc(i.metric_label)}`:""}</small></div><span class="n">${byPlat[p].length}</span></li>`;}).join("")||`<li class="hint">No results yet</li>`}</ul></div>
   </aside></div>`;
 }
 function sigCard(c) {
@@ -493,7 +574,7 @@ function sigCard(c) {
   return `<article class="sig ${c.safety}"><div class="sig-top">${ring(c.score, hot)}<div><div class="tags">${tag(c.category,"cat")}${safetyTag(c.safety)}${hot?tag("rising","rise"):""}</div><h3>${esc(c.name)}</h3><div class="plats">${c.platforms.map(p=>logo(p)).join("")}<span class="k">${c.n_items} result${c.n_items>1?"s":""} on ${c.platforms.length} platform${c.platforms.length>1?"s":""}</span></div></div>${pinBtn("sig:"+job.id+":"+c.id)}</div>
     <p class="why">${esc(c.why)}</p>
     <details ${open?"open":""} data-x="${esc(c.id)}"><summary>Content angles &amp; evidence</summary><ul class="angles">${c.angles.map(a=>`<li>${esc(a)}</li>`).join("")}</ul><div class="formats">${c.formats.map(f=>tag(f)).join("")}</div>
-    <ol class="ev">${c.evidence.map(e=>`<li>${logo(e.platform,"xs")}<a href="${esc(e.url)}" target="_blank" rel="noopener" title="${esc(e.topic)}">${esc(e.topic)}</a><span class="m">${e.metric?fmt(e.metric)+" "+esc(e.metric_label):"#"+e.rank}</span></li>`).join("")}</ol></details></article>`;
+    <ol class="ev">${c.evidence.map(e=>`<li>${logo(e.platform,"xs")}<a class="ext" href="${esc(linkOf(e))}" target="_blank" rel="noopener" title="${esc(e.topic)} — ${esc(openTitle(e))}">${esc(e.topic)}</a><span class="m">${e.metric?fmt(e.metric)+" "+esc(e.metric_label):"#"+e.rank}</span></li>`).join("")}</ol></details></article>`;
 }
 function renderPlatforms() {
   const its = visibleItems(); const by = {}; its.forEach(i => (by[i.platform] ||= []).push(i));
@@ -510,14 +591,14 @@ function rowHTML(i, pos) {
   if (i.extra) meta.push(`<span>${esc(i.extra)}</span>`); if (i.age_h != null) meta.push(`<span>${ago(i.age_h)} ago</span>`);
   if (i.related?.length) meta.push(`<span>↳ ${esc(i.related.slice(0,2).join(", "))}</span>`);
   meta.push(tag(i.category,"cat")); if (i.safety!=="safe") meta.push(safetyTag(i.safety)); if (i.offtopic) meta.push(tag("off-topic"));
-  return `<li class="row${i.offtopic?" off":""}"><span class="rk">${String(pos).padStart(2,"0")}</span><div class="t"><a href="${esc(i.url)}" target="_blank" rel="noopener">${esc(i.topic)}</a><div class="meta">${meta.join("")}</div>${i.curve?`<div style="margin-top:4px">${spark(i.curve,i.direction)}</div>`:""}</div>${pinBtn("it:"+job.id+":"+i.id)}</li>`;
+  return `<li class="row${i.offtopic?" off":""}"><span class="rk">${String(pos).padStart(2,"0")}</span><div class="t"><a class="ext" href="${esc(linkOf(i))}" target="_blank" rel="noopener" title="${esc(openTitle(i))}">${esc(i.topic)}</a><div class="meta">${meta.join("")}</div>${i.curve?`<div style="margin-top:4px">${spark(i.curve,i.direction)}</div>`:""}</div>${pinBtn("it:"+job.id+":"+i.id)}</li>`;
 }
 function renderTable() {
   const its = visibleItems(); const {k,d} = state.sort;
   const val = (i,key) => key==="platform"?PLAT[i.platform].name : key==="age"?(i.age_h??1e9) : key==="metric"?(i.metric??-1) : (i[key]??"");
   const rows = its.slice().sort((a,b)=>{const x=val(a,k),y=val(b,k); return (typeof x==="number"?x-y:String(x).localeCompare(String(y)))*d;});
   const cols = [["score","Score"],["topic","Result"],["platform","Platform"],["category","Category"],["metric","Metric"],["momentum","Momentum"],["age","Age"],["safety","Safety"]];
-  return filtersHTML({platforms:true}) + `<div class="tbar"><span class="sub">${rows.length} rows · click a header to sort</span><button class="btn" id="csv">Copy as TSV</button></div><div class="tblwrap"><table><thead><tr>${cols.map(([key,l])=>`<th data-k="${key}" ${k===key?`aria-sort="${d>0?"ascending":"descending"}"`:""}>${l}</th>`).join("")}</tr></thead><tbody>${rows.map(i=>`<tr><td class="num">${i.score}</td><td><a href="${esc(i.url)}" target="_blank" rel="noopener">${esc(i.topic)}</a>${i.extra?`<div style="font:500 11px var(--f-mono);color:var(--muted)">${esc(i.extra)}</div>`:""}</td><td>${logo(i.platform,"xs")} ${esc(PLAT[i.platform].name)}</td><td>${esc(i.category)}</td><td class="num">${i.metric?fmt(i.metric)+" "+esc(i.metric_label):"rank "+i.rank}</td><td class="num">${i.momentum}</td><td class="num">${ago(i.age_h)}</td><td>${safetyTag(i.safety)}</td></tr>`).join("")}</tbody></table></div>`;
+  return filtersHTML({platforms:true}) + `<div class="tbar"><span class="sub">${rows.length} rows · click a header to sort</span><button class="btn" id="csv">Copy as TSV</button></div><div class="tblwrap"><table><thead><tr>${cols.map(([key,l])=>`<th data-k="${key}" ${k===key?`aria-sort="${d>0?"ascending":"descending"}"`:""}>${l}</th>`).join("")}</tr></thead><tbody>${rows.map(i=>`<tr><td class="num">${i.score}</td><td><a class="ext" href="${esc(linkOf(i))}" target="_blank" rel="noopener" title="${esc(openTitle(i))}">${esc(i.topic)}</a>${i.extra?`<div style="font:500 11px var(--f-mono);color:var(--muted)">${esc(i.extra)}</div>`:""}</td><td>${logo(i.platform,"xs")} ${esc(PLAT[i.platform].name)}</td><td>${esc(i.category)}</td><td class="num">${i.metric?fmt(i.metric)+" "+esc(i.metric_label):"rank "+i.rank}</td><td class="num">${i.momentum}</td><td class="num">${ago(i.age_h)}</td><td>${safetyTag(i.safety)}</td></tr>`).join("")}</tbody></table></div>`;
 }
 function renderSources() {
   return `<div class="sec-h" style="padding-top:14px"><h2>How long each platform took</h2><span class="sub">extraction time per platform, measured by Apify</span></div>
@@ -546,6 +627,51 @@ function timingHTML() {
     <div class="tot"><span>${job.status==="running"?"All platforms run in parallel, so the total is roughly the slowest one plus the AI step.":fast&&slow&&fast!==slow?`Fastest: <b>${esc(fast.name)}</b> (${fmtDur(fast.secs)}) · Slowest: <b>${esc(slow.name)}</b> (${fmtDur(slow.secs)}). Platforms run in parallel.`:"Platforms run in parallel."}</span><span>${job.status==="running"?"Elapsed":"Total"} <b class="${job.status==="running"?"tm":""}" ${job.status==="running"?`data-since="${esc(job.created_at)}"`:""}>${fmtDur(total)}</b></span></div>
   </div>`;
 }
+/* ---------- loading veil ---------- */
+// Shown over everything while a research runs (platform extraction, then the AI step); fades out the moment the job is done.
+let veilPeeked = null; // job id whose veil the visitor dismissed with "Peek"
+function sweepSVG() {
+  return `<div class="sweep" aria-hidden="true"><svg viewBox="0 0 100 100"><defs><linearGradient id="vg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" style="stop-color:var(--accent);stop-opacity:.6"/><stop offset="1" style="stop-color:var(--accent);stop-opacity:0"/></linearGradient></defs>
+    <circle class="ring" cx="50" cy="50" r="46" stroke-width="1.5"/><circle class="ring" cx="50" cy="50" r="31" stroke-width="1.5"/><circle class="ring" cx="50" cy="50" r="16" stroke-width="1.5"/>
+    <line class="cross" x1="50" y1="4" x2="50" y2="96" stroke-width="1"/><line class="cross" x1="4" y1="50" x2="96" y2="50" stroke-width="1"/>
+    <g class="beam"><path d="M50 50 L50 4 A46 46 0 0 1 86.5 23.5 Z" fill="url(#vg)"/></g>
+    <circle class="blip b1" cx="69" cy="29" r="3.2"/><circle class="blip b2" cx="30" cy="63" r="3.2"/><circle class="blip b3" cx="62" cy="74" r="3.2"/><circle cx="50" cy="50" r="3" fill="var(--accent)"/></svg></div>`;
+}
+function veilEl() {
+  let v = $("#veil");
+  if (!v) { v = document.createElement("div"); v.id = "veil"; v.className = "veil"; v.setAttribute("role", "status"); v.setAttribute("aria-live", "polite"); v.innerHTML = `<div class="vcard"><div class="vtop">${sweepSVG()}<div class="vhead" id="veil-head"></div></div><div class="vbar" id="veil-bar"><i></i></div><div class="vlist" id="veil-list"></div><div class="vfoot" id="veil-foot"></div></div>`; document.body.appendChild(v); }
+  return v;
+}
+function renderVeil(pre) {
+  // pre = { topic, plats } for the moment between pressing Research and the job existing; otherwise the current job decides.
+  const show = !!pre || (job && job.status === "running" && veilPeeked !== job.id);
+  const v = $("#veil");
+  if (!show) { if (v && !v.classList.contains("out")) { v.classList.add("out"); setTimeout(() => { const x = $("#veil"); if (x?.classList.contains("out")) x.remove(); }, 500); } return; }
+  const el = veilEl(); el.classList.remove("out");
+  const j = job;
+  const topic = pre ? pre.topic : (j.mode === "topic" ? j.topic : "what's trending now");
+  const srcs = pre ? pre.plats.map(p => ({ platform: p, status: "queued" })) : j.sources;
+  const brain = pre ? { status: "pending" } : (j.brain || {});
+  const finished = srcs.filter(s => !["running", "queued"].includes(s.status)).length;
+  const analysing = brain.status === "running";
+  const nItems = pre ? 0 : (j.items || []).length;
+  const phase = pre ? "Starting the research" : analysing ? "Analysing the results with AI" : finished < srcs.length ? "Extracting live content from each platform" : "Handing the results to the AI";
+  $("#veil-head").innerHTML = `<h2>${analysing ? "Making sense of" : "Scanning the internet for"} <em>${esc(topic)}</em></h2>
+    <div class="ph"><b>${phase}…</b>${pre ? "" : `<span>${finished}/${srcs.length} platforms done</span>${nItems ? `<span>${nItems} results so far</span>` : ""}<span>elapsed <span class="tm" data-since="${esc(j.created_at)}">${fmtDur(secsSince(j.created_at))}</span></span>`}</div>`;
+  const steps = srcs.length + 1;
+  const brainPart = analysing ? Math.min(.9, secsSince(brain.started_at) / 75) : brain.status === "done" ? 1 : 0;
+  const bar = $("#veil-bar"); bar.classList.toggle("indet", !!pre); bar.querySelector("i").style.width = pre ? "" : Math.round(100 * (finished + brainPart) / steps) + "%";
+  const icon = st => st === "running" ? `<span class="ic sp"></span>` : st === "done" ? `<span class="ic ok">✓</span>` : st === "failed" || st === "empty" ? `<span class="ic no">!</span>` : `<span class="ic qd"></span>`;
+  $("#veil-list").innerHTML = srcs.map(s => {
+    const st = s.status;
+    const txt = st === "running" ? `extracting · <span class="tm" data-since="${esc(s.started_at)}">${fmtDur(secsSince(s.started_at))}</span>` : st === "done" ? `${s.count} results · ${fmtDur(srcDur(s))}` : st === "empty" ? "no results" : st === "failed" ? "failed" : "queued";
+    return `<div class="vrow st-${st}">${logo(s.platform, "xs")}<span class="nm">${esc(PLAT[s.platform]?.name || s.platform)}</span>${icon(st)}<span class="vs">${txt}</span></div>`;
+  }).join("") + `<div class="vrow brain st-${brain.status || "pending"}"><span class="ai">AI</span><span class="nm" title="Groups the results into signals, writes content angles, flags brand safety">AI analysis</span>${analysing ? `<span class="ic sp"></span><span class="vs">grouping into signals · <span class="tm" data-since="${esc(brain.started_at || "")}">${fmtDur(secsSince(brain.started_at))}</span></span>` : brain.status === "done" ? `<span class="ic ok">✓</span><span class="vs">done</span>` : brain.status === "skipped" || brain.status === "failed" ? `<span class="ic no">!</span><span class="vs">${esc(brain.status)}</span>` : `<span class="ic qd"></span><span class="vs">starts after the platforms</span>`}</div>`;
+  $("#veil-foot").innerHTML = `<span>${pre ? "Contacting the platforms…" : analysing ? "The AI is grouping the results into signals and writing the content angles (usually 30–90s)." : "Each platform is scraped live, so this usually takes 1–3 minutes."} The results open automatically.</span>${pre ? "" : `<button class="btn ghost" id="veil-peek" type="button">Peek at results so far →</button>`}`;
+  $("#veil-peek")?.addEventListener("click", () => { veilPeeked = j.id; renderVeil(); toast("Results update live as the platforms finish", 2500); });
+  if (el.querySelector(".tm[data-since]")) startTicking();
+}
+
 let tickTimer = null;
 function startTicking() { stopTicking(); tickTimer = setInterval(() => { const els = document.querySelectorAll(".tm[data-since]"); if (!els.length) return stopTicking(); els.forEach(el => { el.textContent = fmtDur(secsSince(el.dataset.since)); }); }, 1000); }
 function stopTicking() { if (tickTimer) { clearInterval(tickTimer); tickTimer = null; } }
@@ -554,9 +680,9 @@ function bindJob() {
   const m = $("#main");
   if (document.querySelector(".tm[data-since]")) startTicking(); else stopTicking();
   m.querySelector("#share")?.addEventListener("click", () => copyText(location.origin + "/r/" + job.id, "Link copied"));
-  m.querySelector("#rerun")?.addEventListener("click", async (ev) => { form = { mode: job.mode, topic: job.mode==="topic"?job.topic:"", region: job.region, windowH: job.windowH, plats: new Set(job.platforms) }; ev.target.disabled = true; ev.target.textContent = "Starting…"; stopPolling(); await startResearch({ fresh: true }); ev.target.disabled = false; ev.target.textContent = "Run again"; });
+  m.querySelector("#rerun")?.addEventListener("click", async (ev) => { form = { mode: job.mode, topic: job.mode==="topic"?job.topic:"", brief: job.brief||"", region: job.region, windowH: job.windowH, plats: new Set(job.platforms) }; ev.target.disabled = true; ev.target.textContent = "Starting…"; stopPolling(); await startResearch({ fresh: true }); ev.target.disabled = false; ev.target.textContent = "Run again"; });
   m.querySelector("#retry-brain")?.addEventListener("click", async () => { try { const r = await fetchJobLive(job.id, "/api/job?id="+job.id+"&retry=brain"); job = r.job; renderJob(); schedulePoll(); } catch(e) { toast(e.message); } });
-  m.querySelectorAll("[data-next]").forEach(b => b.addEventListener("click", () => { form = { mode:"topic", topic:b.dataset.next, region:job.region, windowH:job.windowH, plats:new Set(TOPIC_PLATS) }; stopPolling(); job = null; go("/"); setTimeout(startResearch, 50); }));
+  m.querySelectorAll("[data-next]").forEach(b => b.addEventListener("click", () => { form = { mode:"topic", topic:b.dataset.next, brief:job.brief||"", region:job.region, windowH:job.windowH, plats:new Set(TOPIC_PLATS) }; stopPolling(); job = null; go("/"); setTimeout(startResearch, 50); }));
   m.querySelector("#q")?.addEventListener("input", e => { state.q = e.target.value; clearTimeout(bindJob.t); bindJob.t = setTimeout(() => { const pos = e.target.selectionStart; renderJob(); const q=$("#q"); if(q){q.focus(); try{q.setSelectionRange(pos,pos);}catch{}} }, 150); });
   m.querySelector("#safe")?.addEventListener("change", e => { state.safeOnly = e.target.checked; renderJob(); });
   m.querySelector("#showoff")?.addEventListener("change", e => { state.showOff = e.target.checked; renderJob(); });
@@ -565,7 +691,7 @@ function bindJob() {
   m.querySelectorAll("[data-more]").forEach(b => b.addEventListener("click", () => { const k=b.dataset.more; state.expanded.has(k)?state.expanded.delete(k):state.expanded.add(k); renderJob(); }));
   m.querySelectorAll("details[data-x]").forEach(d => d.addEventListener("toggle", () => { d.open?state.expanded.add(d.dataset.x):state.expanded.delete(d.dataset.x); }));
   m.querySelectorAll("th[data-k]").forEach(th => th.addEventListener("click", () => { const key=th.dataset.k; state.sort = { k:key, d: state.sort.k===key ? -state.sort.d : (["topic","platform","category","safety"].includes(key)?1:-1) }; renderJob(); }));
-  m.querySelector("#csv")?.addEventListener("click", () => { const rows = visibleItems(); copyText(["Score\tResult\tPlatform\tCategory\tMetric\tMomentum\tAge(h)\tSafety\tURL", ...rows.map(i=>[i.score,i.topic,PLAT[i.platform].name,i.category,i.metric?`${i.metric} ${i.metric_label}`:`rank ${i.rank}`,i.momentum,i.age_h??"",i.safety,i.url].join("\t"))].join("\n")); });
+  m.querySelector("#csv")?.addEventListener("click", () => { const rows = visibleItems(); copyText(["Score\tResult\tPlatform\tCategory\tMetric\tMomentum\tAge(h)\tSafety\tURL", ...rows.map(i=>[i.score,i.topic,PLAT[i.platform].name,i.category,i.metric?`${i.metric} ${i.metric_label}`:`rank ${i.rank}`,i.momentum,i.age_h??"",i.safety,linkOf(i)].join("\t"))].join("\n")); });
 }
 
 /* ---------- shortlist ---------- */
@@ -575,15 +701,15 @@ document.addEventListener("click", e => {
   if (pins.some(p => p.id === id)) { pins = pins.filter(p => p.id !== id); toast("Removed from shortlist"); }
   else {
     let p = null;
-    if (id.startsWith("sig:")) { const c = job.clusters.find(c => "sig:"+job.id+":"+c.id === id); if (c) p = { id, kind:"signal", title:c.name, topic:job.topic, category:c.category, safety:c.safety, score:c.score, platforms:c.platforms, why:c.why, angles:c.angles, formats:c.formats, url:c.evidence[0]?.url||"", note:"", created_at:new Date().toISOString(), job:job.id }; }
-    else { const it = job.items.find(i => "it:"+job.id+":"+i.id === id); if (it) p = { id, kind:"result", title:it.topic, topic:job.topic, category:it.category, safety:it.safety, score:it.score, platforms:[it.platform], why:`${PLAT[it.platform].name}${it.metric?` · ${fmt(it.metric)} ${it.metric_label}`:""}${it.extra?` · ${it.extra}`:""}`, angles:[], formats:[], url:it.url, note:"", created_at:new Date().toISOString(), job:job.id }; }
+    if (id.startsWith("sig:")) { const c = job.clusters.find(c => "sig:"+job.id+":"+c.id === id); if (c) p = { id, kind:"signal", title:c.name, topic:job.topic, category:c.category, safety:c.safety, score:c.score, platforms:c.platforms, why:c.why, angles:c.angles, formats:c.formats, url:c.evidence[0]?linkOf(c.evidence[0]):"", note:"", created_at:new Date().toISOString(), job:job.id }; }
+    else { const it = job.items.find(i => "it:"+job.id+":"+i.id === id); if (it) p = { id, kind:"result", title:it.topic, topic:job.topic, category:it.category, safety:it.safety, score:it.score, platforms:[it.platform], why:`${PLAT[it.platform].name}${it.metric?` · ${fmt(it.metric)} ${it.metric_label}`:""}${it.extra?` · ${it.extra}`:""}`, angles:[], formats:[], url:linkOf(it), note:"", created_at:new Date().toISOString(), job:job.id }; }
     if (p) { pins.unshift(p); toast("Added to shortlist"); }
   }
   savePins(); document.querySelectorAll("[data-pin]").forEach(b => b.setAttribute("aria-pressed", pins.some(p => p.id === b.dataset.pin))); renderDrawer();
 });
 function briefText(p) { return [`TREND BRIEF — ${p.title}`, `Research: ${p.topic} · Category: ${p.category} · Brand safety: ${p.safety} · Score: ${p.score}/100`, `Platforms: ${(p.platforms||[]).map(x=>PLAT[x]?.name||x).join(", ")}`, p.why?`Why now: ${p.why}`:"", p.angles?.length?`Angles:\n${p.angles.map(a=>"  • "+a).join("\n")}`:"", p.formats?.length?`Formats: ${p.formats.join(", ")}`:"", p.url?`Source: ${p.url}`:"", p.note?`Notes: ${p.note}`:"", `Link: ${location.origin}/r/${p.job}`].filter(Boolean).join("\n"); }
 function renderDrawer() {
-  $("#drawer-body").innerHTML = pins.length ? pins.map(p => `<div class="card"><div class="meta">${(p.platforms||[]).map(x=>logo(x,"xs")).join("")}${tag(p.category,"cat")}${safetyTag(p.safety)}<span class="tag">score ${p.score}</span></div><h4>${p.url?`<a href="${esc(p.url)}" target="_blank" rel="noopener" style="text-decoration:none">${esc(p.title)}</a>`:esc(p.title)}</h4><div style="font-size:12px;color:var(--muted)">from “${esc(p.topic)}”</div>${p.why?`<div style="font-size:12.5px;color:var(--ink-2)">${esc(p.why)}</div>`:""}<textarea data-note="${esc(p.id)}" placeholder="Notes: client, owner, deadline…">${esc(p.note||"")}</textarea><div class="acts"><button class="btn" data-brief="${esc(p.id)}">Copy brief</button><button class="btn ghost" data-unpin="${esc(p.id)}">Remove</button></div></div>`).join("") : `<div class="empty"><b>Nothing shortlisted</b>Star any signal or result to keep it here. The shortlist is saved in this browser.</div>`;
+  $("#drawer-body").innerHTML = pins.length ? pins.map(p => `<div class="card"><div class="meta">${(p.platforms||[]).map(x=>logo(x,"xs")).join("")}${tag(p.category,"cat")}${safetyTag(p.safety)}<span class="tag">score ${p.score}</span></div><h4><a class="ext" href="${esc(linkOf({ url:p.url, platform:p.platforms?.[0], topic:p.title }))}" target="_blank" rel="noopener">${esc(p.title)}</a></h4><div style="font-size:12px;color:var(--muted)">from “${esc(p.topic)}”</div>${p.why?`<div style="font-size:12.5px;color:var(--ink-2)">${esc(p.why)}</div>`:""}<textarea data-note="${esc(p.id)}" placeholder="Notes: client, owner, deadline…">${esc(p.note||"")}</textarea><div class="acts"><button class="btn" data-brief="${esc(p.id)}">Copy brief</button><button class="btn ghost" data-unpin="${esc(p.id)}">Remove</button></div></div>`).join("") : `<div class="empty"><b>Nothing shortlisted</b>Star any signal or result to keep it here. The shortlist is saved in this browser.</div>`;
 }
 $("#drawer-body").addEventListener("click", e => { const u=e.target.closest("[data-unpin]"); if(u){ pins=pins.filter(p=>p.id!==u.dataset.unpin); savePins(); renderDrawer(); document.querySelectorAll("[data-pin]").forEach(b=>b.setAttribute("aria-pressed",pins.some(p=>p.id===b.dataset.pin))); return; } const b=e.target.closest("[data-brief]"); if(b){ const p=pins.find(x=>x.id===b.dataset.brief); if(p) copyText(briefText(p)); } });
 $("#drawer-body").addEventListener("input", e => { const n=e.target.closest("[data-note]"); if(!n) return; const p=pins.find(x=>x.id===n.dataset.note); if(p){ p.note=n.value; savePins(); } });
