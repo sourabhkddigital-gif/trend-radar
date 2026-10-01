@@ -395,11 +395,29 @@ async function startResearch({ fresh = false } = {}) {
 /* ---------- job ---------- */
 async function loadJob(id) {
   if (!job || job.id !== id) { $("#main").innerHTML = `<div class="empty" style="margin-top:40px"><b>Loading research…</b></div>`; job = null; }
-  try { const r = await api("/api/job?id="+id); job = r.job; renderJob(); schedulePoll(); }
+  try { const r = await fetchJobLive(id, "/api/job?id="+id); job = r.job; renderJob(); schedulePoll(); }
   catch (e) { $("#main").innerHTML = `<div class="note err" style="margin-top:30px">${esc(e.message)} <button class="btn ghost" onclick="location.href='/'">Back</button></div>`; }
 }
 function schedulePoll() { stopPolling(); if (job?.status === "running" || job?.brain?.status === "running") pollTimer = setTimeout(() => loadJob(job.id), 3500); }
 function stopPolling() { clearTimeout(pollTimer); pollTimer = null; }
+// A poll that triggers the AI step stays open until the analysis finishes (up to ~4 min). While it is pending,
+// read the stored job every 3 s (?peek=1, no side effects) so platform "done in" times and the analysis timer stay live.
+let peekTimer = null;
+function startPeek(id) {
+  stopPeek();
+  peekTimer = setInterval(async () => {
+    try {
+      const r = await api("/api/job?id="+id+"&peek=1");
+      if (!r?.job || !job || job.id !== id) return;
+      if ((r.job.updated_at || "") > (job.updated_at || "")) { job = r.job; renderJob(); }
+    } catch {}
+  }, 3000);
+}
+function stopPeek() { if (peekTimer) { clearInterval(peekTimer); peekTimer = null; } }
+async function fetchJobLive(id, url) {
+  const t = setTimeout(() => startPeek(id), 2500); // normal polls answer in well under a second; only a slow one needs peeking
+  try { return await api(url); } finally { clearTimeout(t); stopPeek(); }
+}
 
 const items = () => (job?.items || []).filter(i => state.showOff || !i.offtopic);
 function visibleItems() {
@@ -537,7 +555,7 @@ function bindJob() {
   if (document.querySelector(".tm[data-since]")) startTicking(); else stopTicking();
   m.querySelector("#share")?.addEventListener("click", () => copyText(location.origin + "/r/" + job.id, "Link copied"));
   m.querySelector("#rerun")?.addEventListener("click", async (ev) => { form = { mode: job.mode, topic: job.mode==="topic"?job.topic:"", region: job.region, windowH: job.windowH, plats: new Set(job.platforms) }; ev.target.disabled = true; ev.target.textContent = "Starting…"; stopPolling(); await startResearch({ fresh: true }); ev.target.disabled = false; ev.target.textContent = "Run again"; });
-  m.querySelector("#retry-brain")?.addEventListener("click", async () => { try { const r = await api("/api/job?id="+job.id+"&retry=brain"); job = r.job; renderJob(); schedulePoll(); } catch(e) { toast(e.message); } });
+  m.querySelector("#retry-brain")?.addEventListener("click", async () => { try { const r = await fetchJobLive(job.id, "/api/job?id="+job.id+"&retry=brain"); job = r.job; renderJob(); schedulePoll(); } catch(e) { toast(e.message); } });
   m.querySelectorAll("[data-next]").forEach(b => b.addEventListener("click", () => { form = { mode:"topic", topic:b.dataset.next, region:job.region, windowH:job.windowH, plats:new Set(TOPIC_PLATS) }; stopPolling(); job = null; go("/"); setTimeout(startResearch, 50); }));
   m.querySelector("#q")?.addEventListener("input", e => { state.q = e.target.value; clearTimeout(bindJob.t); bindJob.t = setTimeout(() => { const pos = e.target.selectionStart; renderJob(); const q=$("#q"); if(q){q.focus(); try{q.setSelectionRange(pos,pos);}catch{}} }, 150); });
   m.querySelector("#safe")?.addEventListener("change", e => { state.safeOnly = e.target.checked; renderJob(); });
