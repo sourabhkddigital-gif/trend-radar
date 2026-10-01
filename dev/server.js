@@ -11,7 +11,7 @@ const PORT = Number(process.env.PORT || 3000);
 if (process.env.MOCK) await installMocks();
 
 const handlers = {};
-for (const name of ["research", "job", "jobs", "health", "history", "backfill"]) handlers[name] = (await import(pathToFileURL(path.join(ROOT, "api", name + ".js")).href)).default;
+for (const name of ["research", "job", "jobs", "health", "history", "backfill", "credits"]) handlers[name] = (await import(pathToFileURL(path.join(ROOT, "api", name + ".js")).href)).default;
 
 http.createServer(async (req, res) => {
   const url = new URL(req.url, "http://localhost");
@@ -24,7 +24,7 @@ http.createServer(async (req, res) => {
     try { await h(vreq, vres); } catch (e) { res.statusCode = 500; res.end(JSON.stringify({ error: String(e.message) })); }
     return;
   }
-  let file = url.pathname === "/" || url.pathname.startsWith("/r/") || url.pathname === "/history" ? "/index.html" : url.pathname;
+  let file = url.pathname === "/" || url.pathname.startsWith("/r/") || url.pathname === "/history" || url.pathname === "/costs" ? "/index.html" : url.pathname;
   const fp = path.join(ROOT, "public", file);
   if (!fp.startsWith(path.join(ROOT, "public")) || !existsSync(fp)) { res.writeHead(404); return res.end("not found"); }
   res.setHeader("Content-Type", fp.endsWith(".js") ? "text/javascript" : fp.endsWith(".html") ? "text/html; charset=utf-8" : "application/octet-stream");
@@ -53,8 +53,11 @@ async function installMocks() {
       if ((mm = p.match(/^\/datasets\/ds-([^/]+)$/))) { const r = runs.get(mm[1]); return json({ data: { id: "ds-" + mm[1], itemCount: r.fail ? 0 : (F[r.key] || []).length } }); }
       if ((mm = p.match(/^\/datasets\/ds-([^/]+)\/items$/))) { const r = runs.get(mm[1]); return json(r.fail ? [] : (F[r.key] || [])); }
       if (p === "/users/me") return json({ data: { id: "u", username: "mock" } });
+      if (p === "/users/me/limits") return json({ data: { monthlyUsageCycle: { startAt: "2026-09-15T00:00:00.000Z", endAt: "2026-10-14T23:59:59.999Z" }, limits: { maxMonthlyUsageUsd: 29 }, current: { monthlyUsageUsd: 7.4213 } } });
       return json({ error: { message: "mock: unknown " + p } }, 404);
     }
+    if (u.hostname === "openrouter.ai" && u.pathname === "/api/v1/credits") return json({ data: { total_credits: 20, total_usage: 3.4172 } });
+    if (u.hostname === "openrouter.ai" && u.pathname === "/api/v1/key") return json({ data: { label: "mock", usage: 3.4172, limit: null, limit_remaining: null } });
     if (u.hostname.endsWith("supabase.co")) {
       const t = u.pathname.replace(/^\/rest\/v1\//, ""); const tbl = (db[t] ||= []); const q = u.searchParams; const body = init.body ? JSON.parse(init.body) : null;
       const pk = t === "reports" ? r => r.id : r => r.report_id + "|" + (r.item_id ?? r.signal_id ?? r.platform);
