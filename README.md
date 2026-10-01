@@ -25,7 +25,8 @@ Every research run gets a shareable link (`/r/<id>`). Results are stored in your
    | `ACCESS_CODE` | no | Leave unset for an **open site** — anyone with the URL can search, and the two limits below cap what it can cost you. If set, starting a research needs the code (viewing is always open); share `https://your-site/?k=<code>` as an invite link that saves it silently |
    | `DAILY_LIMIT` | no | Max researches per rolling 24 h on the shared keys, all visitors combined (default 0 = unlimited) |
    | `IP_DAILY_LIMIT` | no | Max researches per visitor (hashed IP) per rolling 24 h (default 0 = unlimited) |
-   | `REUSE_HOURS` | no | Same topic/region/window asked again within N hours reuses the existing research instead of paying twice (default 2) |
+   | `SUPABASE_URL` / `SUPABASE_SECRET_KEY` | no | Set automatically by the Vercel ↔ Supabase integration; enables the report archive and the History page |
+| `REUSE_HOURS` | no | Same topic/region/window asked again within N hours reuses the existing research instead of paying twice (default 2) |
    | `KV_STORE_NAME` | no | Apify key-value store name for saved results (default `trend-radar-jobs`) |
    | `APP_NAME` | no | Display name |
 
@@ -50,6 +51,8 @@ GET  /api/health     → which keys are configured
 While a research runs, the page shows a translucent loading screen with a radar sweep, one live row per platform (extracting · 12s → 25 results · 9s) and the AI step; it fades out the moment the job is complete. "Peek at results so far" dismisses it early.
 
 **Focus brief.** Under the search bar there is an optional, paragraph-length "Focus" box. The platforms are always searched for the topic alone; the brief is sent to the AI, which treats results outside that angle as off-topic and builds the signals, summary and next queries around the aspects it names. The brief is stored with the job, shown on the results page, and is part of the reuse key (same topic with a different focus starts a new research).
+
+**Report archive (Supabase).** When the project is connected to a Supabase database (the Vercel ↔ Supabase integration injects `SUPABASE_URL` and `SUPABASE_SECRET_KEY`), every research is saved when it completes: one row per report in `reports` (with the full JSON), one row per result in `report_items`, one per signal in `report_signals`. Run `db/schema.sql` once in the Supabase SQL editor. The **History** page (`/history`) searches the archive by keyword, focus, signal or summary, filters by date, and exports CSV; `POST /api/backfill` copies whatever the Apify store still holds into the database (idempotent). Without a database the dashboard works exactly as before, it just doesn't archive.
 
 **Links.** Every result links to the original post/video/article on its platform (Google News items go through Google's redirect, which lands on the publisher). If a scraper returns no usable URL, the link falls back to that platform's own search for the result, so nothing is a dead end.
 

@@ -1,5 +1,43 @@
 {
-  "functions": { "api/job.js": { "maxDuration": 300 }, "api/research.js": { "maxDuration": 120 }, "api/jobs.js": { "maxDuration": 30 }, "api/health.js": { "maxDuration": 10 } },
-  "rewrites": [{ "source": "/r/:id", "destination": "/index.html" }],
-  "headers": [{ "source": "/api/(.*)", "headers": [{ "key": "Cache-Control", "value": "no-store" }] }]
+  "functions": {
+    "api/job.js": {
+      "maxDuration": 300
+    },
+    "api/research.js": {
+      "maxDuration": 120
+    },
+    "api/jobs.js": {
+      "maxDuration": 30
+    },
+    "api/health.js": {
+      "maxDuration": 10
+    },
+    "api/history.js": {
+      "maxDuration": 30
+    },
+    "api/backfill.js": {
+      "maxDuration": 120
+    }
+  },
+  "rewrites": [
+    {
+      "source": "/history",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/r/:id",
+      "destination": "/index.html"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/api/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-store"
+        }
+      ]
+    }
+  ]
 }
