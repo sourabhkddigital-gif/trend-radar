@@ -46,14 +46,18 @@ async function installMocks() {
       let mm;
       if ((mm = p.match(/^\/key-value-stores\/[^/]+\/records\/(.+)$/))) { const k = decodeURIComponent(mm[1]); if (m === "PUT") { kv.set(k, JSON.parse(init.body)); return new Response("", { status: 201 }); } return kv.has(k) ? json(kv.get(k)) : new Response("", { status: 404 }); }
       if ((mm = p.match(/^\/acts\/([^/]+)\/runs$/))) { const actor = decodeURIComponent(mm[1]).replace("~", "/"); const input = JSON.parse(init.body || "{}"); const id = "run" + (++n); const key = actor === "orbots/google-trends-scraper" && input.mode === "trending" ? actor + "#trending" : actor; runs.set(id, { actor, key, polls: 0, t0: Date.now(), fail: process.env.MOCK_FAIL === actor }); return json({ data: { id, defaultDatasetId: "ds-" + id, status: "RUNNING" } }); }
-      if ((mm = p.match(/^\/actor-runs\/([^/]+)$/))) { const r = runs.get(mm[1]); r.dur ||= 1500 + Math.random() * 6000; const done = Date.now() - r.t0 > r.dur; return json({ data: { id: mm[1], status: r.fail && done ? "FAILED" : done ? "SUCCEEDED" : "RUNNING", defaultDatasetId: "ds-" + mm[1], statusMessage: r.fail ? "mock failure" : "ok", startedAt: new Date(r.t0).toISOString(), finishedAt: done ? new Date(r.t0 + r.dur).toISOString() : null } }); }
+      if ((mm = p.match(/^\/actor-runs\/([^/]+)$/))) { const r = runs.get(mm[1]); r.dur ||= 1500 + Math.random() * 6000; const done = Date.now() - r.t0 > r.dur; const nRows = r.fail ? 0 : (F[r.key] || []).length; return json({ data: { id: mm[1], status: r.fail && done ? "FAILED" : done ? "SUCCEEDED" : "RUNNING", defaultDatasetId: "ds-" + mm[1], statusMessage: r.fail ? "mock failure" : "ok", startedAt: new Date(r.t0).toISOString(), finishedAt: done ? new Date(r.t0 + r.dur).toISOString() : null,
+        // cost tracker fields, shaped like Apify's: a pay-per-event actor charging $0.004 per result (Google Trends: pay-per-result at $0.002)
+        usageTotalUsd: done ? 0.0007 : 0, chargedEventCounts: done && !r.key.startsWith("orbots") ? { result: nRows } : {},
+        pricingInfo: r.key.startsWith("orbots") ? { pricingModel: "PRICE_PER_DATASET_ITEM", pricePerUnitUsd: 0.002 } : { pricingModel: "PAY_PER_EVENT", pricingPerEvent: { actorChargeEvents: { result: { eventTitle: "result", eventPriceUsd: 0.004 } } } } } }); }
+      if ((mm = p.match(/^\/datasets\/ds-([^/]+)$/))) { const r = runs.get(mm[1]); return json({ data: { id: "ds-" + mm[1], itemCount: r.fail ? 0 : (F[r.key] || []).length } }); }
       if ((mm = p.match(/^\/datasets\/ds-([^/]+)\/items$/))) { const r = runs.get(mm[1]); return json(r.fail ? [] : (F[r.key] || [])); }
       if (p === "/users/me") return json({ data: { id: "u", username: "mock" } });
       return json({ error: { message: "mock: unknown " + p } }, 404);
     }
     if (u.hostname.endsWith("supabase.co")) {
       const t = u.pathname.replace(/^\/rest\/v1\//, ""); const tbl = (db[t] ||= []); const q = u.searchParams; const body = init.body ? JSON.parse(init.body) : null;
-      const pk = t === "reports" ? r => r.id : r => r.report_id + "|" + (r.item_id ?? r.signal_id);
+      const pk = t === "reports" ? r => r.id : r => r.report_id + "|" + (r.item_id ?? r.signal_id ?? r.platform);
       const eqId = [...q.entries()].find(([k, v]) => v.startsWith("eq."));
       if (m === "POST") { for (const r of [].concat(body)) { const i = tbl.findIndex(x => pk(x) === pk(r)); i >= 0 ? tbl[i] = r : tbl.push(r); } return new Response("", { status: 201 }); }
       if (m === "DELETE") { if (eqId) db[t] = tbl.filter(r => String(r[eqId[0]]) !== eqId[1].slice(3)); return new Response(null, { status: 204 }); }
@@ -76,7 +80,7 @@ async function installMocks() {
       grab("Agents and automation how-tos", "Tech & AI", "safe", [byP.x?.[0], byP.x?.[1], byP.tiktok?.[0], byP.instagram?.[0]]);
       grab("Traffic-camera mishap", "News & Weather", "caution", [byP.reddit?.[0]]);
       await new Promise(r => setTimeout(r, Number(process.env.MOCK_BRAIN_MS || 1200))); // MOCK_BRAIN_MS=15000 to see the long-analysis state
-      return json({ model: "mock/model", choices: [{ message: { content: JSON.stringify({ summary: "Mock summary: the topic is having a moment, driven by a $350M raise and a wave of agent tutorials.", clusters, offtopic: [byP.tiktok?.[1]].filter(Boolean), next_queries: ["AI agents", "workflow automation", "EliseAI"] }) } }] });
+      return json({ id: "gen-mock-1", model: "mock/model", usage: { prompt_tokens: 4180, completion_tokens: 920, total_tokens: 5100, cost: 0.0193 }, choices: [{ message: { content: JSON.stringify({ summary: "Mock summary: the topic is having a moment, driven by a $350M raise and a wave of agent tutorials.", clusters, offtopic: [byP.tiktok?.[1]].filter(Boolean), next_queries: ["AI agents", "workflow automation", "EliseAI"] }) } }] });
     }
     return realFetch(input, init);
   };
