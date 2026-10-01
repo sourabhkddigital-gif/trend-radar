@@ -42,9 +42,16 @@ POST /api/research   → validates keys, starts one Apify actor run per platform
 GET  /api/job?id=…   → polled by the page every 3.5 s: collects finished datasets, normalizes rows,
                         scores them; when all sources are in, sends titles+metrics to the model,
                         stores signals/summary/next queries, marks the job complete
+GET  /api/job?id=…&peek=1 → read-only copy of the job (the page uses it while the AI step holds a poll open)
 GET  /api/jobs       → recent research list (from the Apify key-value store "index" record)
 GET  /api/health     → which keys are configured
 ```
+
+While a research runs, the page shows a translucent loading screen with a radar sweep, one live row per platform (extracting · 12s → 25 results · 9s) and the AI step; it fades out the moment the job is complete. "Peek at results so far" dismisses it early.
+
+**Focus brief.** Under the search bar there is an optional, paragraph-length "Focus" box. The platforms are always searched for the topic alone; the brief is sent to the AI, which treats results outside that angle as off-topic and builds the signals, summary and next queries around the aspects it names. The brief is stored with the job, shown on the results page, and is part of the reuse key (same topic with a different focus starts a new research).
+
+**Links.** Every result links to the original post/video/article on its platform (Google News items go through Google's redirect, which lands on the publisher). If a scraper returns no usable URL, the link falls back to that platform's own search for the result, so nothing is a dead end.
 
 ### Sources (topic mode)
 
