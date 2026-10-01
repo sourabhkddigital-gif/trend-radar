@@ -108,7 +108,19 @@ nav.tabs a .n{font:500 11px var(--f-mono);color:var(--muted);margin-left:5px}
 .src .t b{display:block;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .src .t span{color:var(--muted);font:500 11px var(--f-mono)}
 .src .st{font:600 11px var(--f-mono);padding:3px 7px;border-radius:6px;background:var(--surface-2);color:var(--ink-2);white-space:nowrap}
-.src.done .st{background:var(--good-bg);color:var(--good)} .src.failed .st,.src.empty .st{background:var(--crit-bg);color:var(--crit)} .src.running .st{background:var(--flare-soft);color:var(--flare)}
+.src.st-done .st{background:var(--good-bg);color:var(--good)} .src.st-failed .st,.src.st-empty .st{background:var(--crit-bg);color:var(--crit)} .src.st-running .st{background:var(--flare-soft);color:var(--flare)}
+.src .r{display:flex;flex-direction:column;align-items:flex-end;gap:3px;flex:none}
+.src .tm{font:500 11px var(--f-mono);color:var(--muted);white-space:nowrap;font-variant-numeric:tabular-nums}
+.src.st-running .tm{color:var(--flare)}
+.timing{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin:0 0 14px}
+.timing .row{display:grid;grid-template-columns:150px 1fr 64px;align-items:center;gap:10px;padding:5px 0;font-size:12.5px}
+.timing .row .nm{display:flex;align-items:center;gap:8px;font-weight:600;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.timing .bar{height:10px;border-radius:6px;background:var(--surface-2);overflow:hidden}
+.timing .bar i{display:block;height:100%;border-radius:6px;background:var(--accent);min-width:3px}
+.timing .row.brain .bar i{background:var(--flare)} .timing .row.st-failed .bar i,.timing .row.st-empty .bar i{background:var(--crit)} .timing .row.st-running .bar i{background:var(--flare);opacity:.6}
+.timing .v{font:600 12px var(--f-mono);text-align:right;font-variant-numeric:tabular-nums;color:var(--ink-2)}
+.timing .tot{display:flex;justify-content:space-between;gap:10px;margin-top:8px;padding-top:8px;border-top:1px solid var(--line);font-size:12.5px;color:var(--muted)} .timing .tot b{color:var(--ink);font-family:var(--f-mono)}
+@media (max-width:560px){.timing .row{grid-template-columns:110px 1fr 54px}}
 .summary{background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:14px;padding:16px 18px;margin:14px 0 18px;display:grid;gap:8px}
 .summary p{margin:0;font-size:15px;line-height:1.55;color:var(--ink)}
 .summary .nq{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
@@ -406,14 +418,15 @@ function renderJob() {
   $("#tabs").hidden = false;
   $("#tabs").innerHTML = VIEWS.map(([k,l]) => `<a href="#${k}" aria-current="${state.view===k?"page":"false"}">${l}${k==="radar"&&job.clusters?.length?`<span class="n">${job.clusters.length}</span>`:""}</a>`).join("");
   const when = new Date(job.created_at);
-  $("#status").innerHTML = `<span><span class="dot${running?" run":""}"></span>${running?"Running":"Done"} <b>${when.toLocaleString([], {dateStyle:"medium", timeStyle:"short"})}</b></span><span>Window <b>${job.windowH}h</b></span><span>Region <b>${esc(job.region)}</b></span><span><b>${items().length}</b> results</span>`;
+  const total = totalDur();
+  $("#status").innerHTML = `<span><span class="dot${running?" run":""}"></span>${running?"Running":"Done"} <b>${when.toLocaleString([], {dateStyle:"medium", timeStyle:"short"})}</b></span><span>Window <b>${job.windowH}h</b></span><span>Region <b>${esc(job.region)}</b></span><span><b>${items().length}</b> results</span>${running?`<span>Elapsed <b class="tm" data-since="${esc(job.created_at)}">${fmtDur(secsSince(job.created_at))}</b></span>`:total!=null?`<span>Took <b>${fmtDur(total)}</b></span>`:""}`;
 
   const head = `<div class="jobhead"><div><h2>${job.mode==="topic"?esc(job.topic):"What's trending now"}</h2><div class="meta"><span>${job.mode==="topic"?"Topic research":"Trend scan"}</span><span>${esc(job.region)} · last ${job.windowH}h</span><span>${job.sources.filter(s=>s.status==="done").length}/${job.sources.length} sources</span>${job.brain?.model?`<span>brain: ${esc(job.brain.model)}</span>`:""}</div></div>
     <div class="topbtns"><button class="btn" id="share">Copy link</button><button class="btn" id="rerun">Run again</button>${job.brain?.status==="failed"||job.brain?.status==="skipped"?`<button class="btn primary" id="retry-brain">Analyse with AI</button>`:""}</div></div>
     ${job.error?`<div class="note err">${esc(job.error)}</div>`:""}
-    <div class="progress">${job.sources.map(s => `<div class="src ${s.status}">${logo(s.platform)}<div class="t"><b>${esc(s.label||PLAT[s.platform]?.name)}</b><span>${esc(s.actor)}</span></div><span class="st" title="${esc(s.error||"")}">${s.status==="running"?"running…":s.status==="done"?s.count+" rows":s.status==="empty"?"no results":s.status==="failed"?"failed":"queued"}</span></div>`).join("")}</div>`;
+    <div class="progress">${job.sources.map(s => `<div class="src st-${s.status}">${logo(s.platform)}<div class="t"><b>${esc(s.label||PLAT[s.platform]?.name)}</b><span>${esc(s.actor)}</span></div><div class="r"><span class="st" title="${esc(s.error||"")}">${s.status==="running"?"running…":s.status==="done"?s.count+" rows":s.status==="empty"?"no results":s.status==="failed"?"failed":"queued"}</span>${s.status==="running"&&s.started_at?`<span class="tm" data-since="${esc(s.started_at)}" title="time since this platform's extraction started">${fmtDur(secsSince(s.started_at))}</span>`:srcDur(s)!=null?`<span class="tm" title="time this platform took to extract its results">${s.status==="failed"?"failed after":"done in"} ${fmtDur(srcDur(s))}</span>`:""}</div></div>`).join("")}</div>`;
   const brainBox = job.brain?.status === "running" || (running && job.brain?.status === "pending")
-    ? `<div class="summary"><span class="brainst">${job.brain?.status==="running"?"Analysing results with AI… (20–60s)":"Collecting results… the AI analysis runs when all sources are in."}</span></div>`
+    ? `<div class="summary"><span class="brainst">${job.brain?.status==="running"?`Analysing results with AI… <span class="tm" data-since="${esc(job.brain.started_at||"")}">${fmtDur(secsSince(job.brain.started_at))}</span> (usually 30–90s)`:"Collecting results… the AI analysis runs when all sources are in."}</span></div>`
     : job.summary ? `<div class="summary"><p>${esc(job.summary)}</p>${job.next_queries?.length?`<div class="nq"><span class="lbl">Research next</span>${job.next_queries.map(q=>`<button class="chip" data-next="${esc(q)}">${esc(q)}</button>`).join("")}</div>`:""}</div>`
     : job.brain?.status === "failed" ? `<div class="note">AI analysis failed: ${esc(job.brain.error)}</div>`
     : job.brain?.status === "skipped" ? `<div class="note">${esc(job.brain.error||"AI analysis skipped.")}</div>` : "";
@@ -489,14 +502,39 @@ function renderTable() {
   return filtersHTML({platforms:true}) + `<div class="tbar"><span class="sub">${rows.length} rows · click a header to sort</span><button class="btn" id="csv">Copy as TSV</button></div><div class="tblwrap"><table><thead><tr>${cols.map(([key,l])=>`<th data-k="${key}" ${k===key?`aria-sort="${d>0?"ascending":"descending"}"`:""}>${l}</th>`).join("")}</tr></thead><tbody>${rows.map(i=>`<tr><td class="num">${i.score}</td><td><a href="${esc(i.url)}" target="_blank" rel="noopener">${esc(i.topic)}</a>${i.extra?`<div style="font:500 11px var(--f-mono);color:var(--muted)">${esc(i.extra)}</div>`:""}</td><td>${logo(i.platform,"xs")} ${esc(PLAT[i.platform].name)}</td><td>${esc(i.category)}</td><td class="num">${i.metric?fmt(i.metric)+" "+esc(i.metric_label):"rank "+i.rank}</td><td class="num">${i.momentum}</td><td class="num">${ago(i.age_h)}</td><td>${safetyTag(i.safety)}</td></tr>`).join("")}</tbody></table></div>`;
 }
 function renderSources() {
-  return `<div class="sec-h" style="padding-top:14px"><h2>Sources &amp; method</h2><span class="sub">what ran for this research</span></div>
-  <div class="srcs">${job.sources.map(s=>`<div class="srcbox"><div class="h">${logo(s.platform)}${esc(PLAT[s.platform].name)}<span style="margin-left:auto;font:500 12px var(--f-mono);color:${s.status==="done"?"var(--accent-ink)":"var(--crit)"}">${s.status==="done"?s.count+" rows":s.status}</span></div><dl><dt>Query</dt><dd>${esc(s.label)}</dd><dt>Actor</dt><dd><code>${esc(s.actor)}</code></dd>${s.error?`<dt>Error</dt><dd>${esc(s.error)}</dd>`:""}${s.finished_at?`<dt>Took</dt><dd>${Math.round((new Date(s.finished_at)-new Date(s.started_at))/1000)}s</dd>`:""}</dl></div>`).join("")}</div>
+  return `<div class="sec-h" style="padding-top:14px"><h2>How long each platform took</h2><span class="sub">extraction time per platform, measured by Apify</span></div>
+  ${timingHTML()}
+  <div class="sec-h"><h2>Sources &amp; method</h2><span class="sub">what ran for this research</span></div>
+  <div class="srcs">${job.sources.map(s=>`<div class="srcbox"><div class="h">${logo(s.platform)}${esc(PLAT[s.platform].name)}<span style="margin-left:auto;font:500 12px var(--f-mono);color:${s.status==="done"?"var(--accent-ink)":"var(--crit)"}">${s.status==="done"?s.count+" rows":s.status}</span></div><dl><dt>Query</dt><dd>${esc(s.label)}</dd><dt>Actor</dt><dd><code>${esc(s.actor)}</code></dd>${s.error?`<dt>Error</dt><dd>${esc(s.error)}</dd>`:""}${srcDur(s)!=null?`<dt>Took</dt><dd>${fmtDur(srcDur(s))}</dd>`:s.status==="running"?`<dt>Running</dt><dd><span class="tm" data-since="${esc(s.started_at)}">${fmtDur(secsSince(s.started_at))}</span></dd>`:""}</dl></div>`).join("")}</div>
   <div class="prose"><h2>How the score works</h2><p>Every result gets 0–100 from <b>reach</b> (rank inside its own platform), <b>momentum</b> (how fresh it is, Google growth %, TikTok trend direction, Pinterest week-over-week) and a small platform weight. A signal adds <b>breadth</b> (+12 per extra platform, +4 for a second region) and a volume bonus for very large numbers, then subtracts 25 for <i>caution</i> and 60 for <i>avoid</i>.</p>
   <h2>The AI layer</h2><p>When all sources are in, the results are sent to a language model (via OpenRouter) that groups them into signals, drops off-topic noise, writes the "why now" with numbers, proposes content angles and flags brand safety. It sees only titles, captions, metrics and ages, never full pages.</p>
   <h2>Limits</h2><p>Topic mode searches each platform for your words, so a vague topic returns vague results; add a brand or a place to sharpen it. TikTok and Instagram date filters are approximate. X hides volumes for trends. Costs: about $0.30–0.60 in Apify credits per research plus a few cents of model usage.</p></div>`;
 }
+/* ---------- timing ---------- */
+const secsSince = iso => iso ? Math.max(0, Math.round((Date.now() - new Date(iso)) / 1000)) : 0;
+function fmtDur(s) { if (s == null) return ""; s = Math.round(s); return s < 60 ? `${s}s` : `${Math.floor(s/60)}m ${String(s%60).padStart(2,"0")}s`; }
+function srcDur(s) { if (s.duration_s != null) return s.duration_s; if (s.started_at && s.finished_at) return Math.max(1, Math.round((new Date(s.finished_at) - new Date(s.started_at)) / 1000)); return null; }
+function brainDur() { const b = job?.brain; if (!b?.started_at) return null; if (b.status === "running") return secsSince(b.started_at); return b.finished_at ? Math.max(1, Math.round((new Date(b.finished_at) - new Date(b.started_at)) / 1000)) : null; }
+function totalDur() { if (!job?.created_at) return null; if (job.status === "running") return secsSince(job.created_at); const end = job.completed_at || job.updated_at; return end ? Math.max(1, Math.round((new Date(end) - new Date(job.created_at)) / 1000)) : null; }
+function timingHTML() {
+  const rows = job.sources.map(s => ({ name: PLAT[s.platform]?.name || s.platform, platform: s.platform, status: s.status, secs: s.status === "running" ? secsSince(s.started_at) : srcDur(s), note: s.status==="done"?`${s.count} rows`:s.status==="empty"?"no results":s.status==="failed"?"failed":"" }));
+  const bd = brainDur(); if (bd != null) rows.push({ name: "AI analysis", brain: true, status: job.brain.status, secs: bd, note: job.brain.model ? job.brain.model.split("/").pop() : "" });
+  const max = Math.max(1, ...rows.map(r => r.secs || 0));
+  const done = rows.filter(r => r.secs != null && r.status !== "running");
+  const slow = done.filter(r => !r.brain).sort((a,b)=>b.secs-a.secs)[0], fast = done.filter(r => !r.brain).sort((a,b)=>a.secs-b.secs)[0];
+  const total = totalDur();
+  return `<div class="timing">
+    ${rows.map(r => `<div class="row ${r.brain?"brain":""} st-${r.status}"><span class="nm">${r.brain?"🧠":logo(r.platform,"xs")}${esc(r.name)}</span><div class="bar" title="${esc(r.note)}"><i style="width:${Math.max(2, Math.round(100*(r.secs||0)/max))}%"></i></div><span class="v ${r.status==="running"?"tm":""}" ${r.status==="running"?`data-since="${esc(r.brain?job.brain.started_at:job.sources.find(s=>s.platform===r.platform)?.started_at)}"`:""}>${r.secs!=null?fmtDur(r.secs):"—"}</span></div>`).join("")}
+    <div class="tot"><span>${job.status==="running"?"All platforms run in parallel, so the total is roughly the slowest one plus the AI step.":fast&&slow&&fast!==slow?`Fastest: <b>${esc(fast.name)}</b> (${fmtDur(fast.secs)}) · Slowest: <b>${esc(slow.name)}</b> (${fmtDur(slow.secs)}). Platforms run in parallel.`:"Platforms run in parallel."}</span><span>${job.status==="running"?"Elapsed":"Total"} <b class="${job.status==="running"?"tm":""}" ${job.status==="running"?`data-since="${esc(job.created_at)}"`:""}>${fmtDur(total)}</b></span></div>
+  </div>`;
+}
+let tickTimer = null;
+function startTicking() { stopTicking(); tickTimer = setInterval(() => { const els = document.querySelectorAll(".tm[data-since]"); if (!els.length) return stopTicking(); els.forEach(el => { el.textContent = fmtDur(secsSince(el.dataset.since)); }); }, 1000); }
+function stopTicking() { if (tickTimer) { clearInterval(tickTimer); tickTimer = null; } }
+
 function bindJob() {
   const m = $("#main");
+  if (document.querySelector(".tm[data-since]")) startTicking(); else stopTicking();
   m.querySelector("#share")?.addEventListener("click", () => copyText(location.origin + "/r/" + job.id, "Link copied"));
   m.querySelector("#rerun")?.addEventListener("click", async (ev) => { form = { mode: job.mode, topic: job.mode==="topic"?job.topic:"", region: job.region, windowH: job.windowH, plats: new Set(job.platforms) }; ev.target.disabled = true; ev.target.textContent = "Starting…"; stopPolling(); await startResearch({ fresh: true }); ev.target.disabled = false; ev.target.textContent = "Run again"; });
   m.querySelector("#retry-brain")?.addEventListener("click", async () => { try { const r = await api("/api/job?id="+job.id+"&retry=brain"); job = r.job; renderJob(); schedulePoll(); } catch(e) { toast(e.message); } });
