@@ -331,6 +331,7 @@ footer{padding:36px 0 30px;color:var(--muted);font-size:12.5px;display:flex;flex
   <nav class="tabs" id="tabs" hidden></nav>
   <div class="topbtns">
     <a class="btn" id="history-link" href="/history" title="Every research, saved">History</a>
+    <a class="btn" id="costs-link" href="/costs" title="Credits used and total spent">Costs</a>
     <button class="btn" id="shortlist-btn" title="Shortlist">☆ <span id="shortlist-n">0</span></button>
     <button class="btn icon" id="settings-btn" title="Settings" aria-label="Settings">⚙</button>
   </div>
@@ -412,13 +413,14 @@ function route() {
   const m = location.pathname.match(/^\/r\/([a-z0-9]+)/i) || location.search.match(/[?&]job=([a-z0-9]+)/i);
   const id = m?.[1]; const hash = (location.hash || "#radar").slice(1);
   state.view = VIEWS.some(v => v[0] === hash) ? hash : "radar";
-  if (id) loadJob(id); else if (/^\/history\/?$/.test(location.pathname)) renderHistory(); else renderHome();
+  if (id) loadJob(id); else if (/^\/history\/?$/.test(location.pathname)) renderHistory(); else if (/^\/costs\/?$/.test(location.pathname)) renderCosts(); else renderHome();
 }
 function go(path) { history.pushState({}, "", path); route(); }
 window.addEventListener("popstate", route);
 window.addEventListener("hashchange", () => { if (job) { state.view = (location.hash||"#radar").slice(1); renderJob(); } });
 $("#home-link").addEventListener("click", e => { e.preventDefault(); stopPolling(); job = null; go("/"); });
 $("#history-link").addEventListener("click", e => { e.preventDefault(); stopPolling(); job = null; go("/history"); });
+$("#costs-link").addEventListener("click", e => { e.preventDefault(); stopPolling(); job = null; go("/costs"); });
 
 /* ---------- home ---------- */
 async function renderHome() {
@@ -538,18 +540,19 @@ function renderHistoryBody() {
   if (!hist.rows.length) { box.innerHTML = `<div class="empty"><b>${filtered?"Nothing matches":"No reports yet"}</b>${filtered?"Try a different keyword or a wider date range.":"Run a research and it will be saved here automatically."}</div>`; return; }
   const dur = s => s == null ? "—" : fmtDur(s);
   const costCell = r => r.cost_usd == null ? `<td class="cost" title="no cost data for this report">—</td>` : `<td class="cost" title="Scrapers (Apify) ${fmtUsd(r.cost_apify_usd)}${r.cost_brain_usd!=null?` · AI (OpenRouter) ${fmtUsd(r.cost_brain_usd)}`:" · AI cost not recorded"}">${fmtUsd(r.cost_usd)}${r.cost_brain_usd==null&&r.status!=="running"?`<small title="AI cost not recorded for this report">*</small>`:""}</td>`;
-  box.innerHTML = `${filtered ? "" : costTrackerHTML()}<div class="tbar"><span class="sub">${filtered?`${hist.total} matching report${hist.total===1?"":"s"} · ${fmtUsd(hist.rows.reduce((a,r)=>a+(Number(r.cost_usd)||0),0))} spent on the ${hist.rows.length} shown`:`all ${hist.total} reports`} · newest first · click a keyword to open the report</span></div>
+  box.innerHTML = `<div class="tbar"><span class="sub">${filtered?`${hist.total} matching report${hist.total===1?"":"s"} · ${fmtUsd(hist.rows.reduce((a,r)=>a+(Number(r.cost_usd)||0),0))} spent on the ${hist.rows.length} shown`:`all ${hist.total} reports`} · newest first · click a keyword to open the report</span><a href="/costs" data-go="/costs" class="sub" style="color:var(--accent-ink);font-weight:700;text-decoration:none">Cost tracker →</a></div>
   <div class="tblwrap"><table class="htab"><thead><tr><th>Date</th><th>Keyword</th><th>Focus</th><th>Region · window</th><th class="num">Results</th><th class="num">Signals</th><th>Top signal</th><th class="num">Took</th><th class="cost">Cost</th></tr></thead><tbody>
   ${hist.rows.map(r => `<tr><td class="num" style="text-align:left">${new Date(r.created_at).toLocaleString([], {dateStyle:"medium", timeStyle:"short"})}</td><td><a href="/r/${esc(r.id)}" data-open="${esc(r.id)}">${esc(r.topic)}</a>${r.status==="running"?` <span class="tag">running</span>`:r.status==="failed"?` <span class="tag avoid">failed</span>`:""}</td><td class="focus-cell" title="${esc(r.brief||"")}">${esc(r.brief||"")}</td><td class="num" style="text-align:left">${esc(r.region||"")} · ${r.window_h}h</td><td class="num">${r.n_items}${r.n_offtopic?`<small> +${r.n_offtopic} off</small>`:""}</td><td class="num">${r.n_signals}</td><td class="top-cell" title="${esc(r.top_signal||"")}">${esc(r.top_signal||"—")}</td><td class="num">${dur(r.duration_s)}</td>${costCell(r)}</tr>`).join("")}
   </tbody></table></div>
   ${hist.rows.length < hist.total ? `<button class="more" id="hmore" style="border:1px solid var(--line);border-radius:10px;margin-top:10px">Show 50 more (${hist.total - hist.rows.length} left)</button>` : ""}`;
   box.querySelectorAll("[data-open]").forEach(a => a.addEventListener("click", e => { e.preventDefault(); go("/r/" + a.dataset.open); }));
   box.querySelector("#hmore")?.addEventListener("click", () => loadHistory(true));
+  box.querySelectorAll("[data-go]").forEach(a => a.addEventListener("click", e => { e.preventDefault(); go(a.dataset.go); }));
 }
 /* The cost tracker on the History page: totals from the archive, with today / this month / per-day worked out in the viewer's own timezone. */
-function costTrackerHTML() {
-  const sp = hist.stats?.spend; if (!sp) return "";
-  const recent = hist.stats.recent || [];
+function costTrackerHTML(stats = hist.stats) {
+  const sp = stats?.spend; if (!sp) return "";
+  const recent = stats.recent || [];
   const dayKey = d => { d = new Date(d); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`; };
   const now = new Date(), today = dayKey(now), month = today.slice(0, 7);
   let tUsd = 0, tN = 0, mUsd = 0, mN = 0; const perDay = {};
@@ -560,7 +563,7 @@ function costTrackerHTML() {
   const monthName = now.toLocaleDateString([], { month: "long" });
   if (!sp.tracked) return `<section class="costs"><div class="sec-h"><h3>Cost tracker</h3><span class="sub">Apify + OpenRouter credits per research</span></div><div class="empty"><b>No costs recorded yet</b>From now on every research records what each scraper and the AI step charged; the totals appear here.</div></section>`;
   return `<section class="costs">
-    <div class="sec-h"><h3>Cost tracker</h3><span class="sub">what the researches cost in Apify credits (scrapers) and OpenRouter credits (AI), in USD · recorded per run</span></div>
+    <div class="sec-h"><h3>Spent on research</h3><span class="sub">what the researches cost in Apify credits (scrapers) and OpenRouter credits (AI), in USD · recorded per run</span></div>
     <div class="kpis">
       <div class="kpi"><span class="l">Total spent</span><span class="v">${fmtUsd(sp.total_usd)}</span><span class="s">${sp.tracked} research${sp.tracked===1?"":"es"} tracked${avg!=null?` · avg ${fmtUsd(avg)} each`:""}</span></div>
       <div class="kpi"><span class="l">${esc(monthName)}</span><span class="v">${fmtUsd(mUsd)}</span><span class="s">${mN} research${mN===1?"":"es"} this month</span></div>
@@ -571,7 +574,7 @@ function costTrackerHTML() {
       <div class="panel"><h3>Spend per day</h3><p class="hint">last 30 days · hover a bar for the day's total</p>${spendChart(days)}</div>
       <div class="panel"><h3>Spend by platform</h3><p class="hint">all time · which scrapers cost the most</p><div class="bars">${plats.map(([p,v]) => `<div class="bar" title="${esc(p==="ai"?"AI analysis":PLAT[p]?.name||p)}: ${fmtUsd(v)} (${Math.round(100*v/Math.max(sp.total_usd,0.000001))}%)"><span class="lbl">${p==="ai"?"🧠 AI analysis":`${logo(p,"xs")} ${esc(PLAT[p]?.name||p)}`}</span><span class="trk"><span class="fill" style="width:${(100*v/pmax).toFixed(1)}%${p==="ai"?";background:var(--flare)":""}"></span></span><span class="val">${fmtUsd(v)}</span></div>`).join("")||`<span class="hint">No platform costs yet</span>`}</div></div>
     </div>
-    ${sp.untracked||sp.brain_untracked?`<p class="costnote">${sp.untracked?`${sp.untracked} report${sp.untracked===1?"":"s"} ha${sp.untracked===1?"s":"ve"} no cost data (still running, or their Apify runs are gone). `:""}${sp.brain_untracked?`For ${sp.brain_untracked} report${sp.brain_untracked===1?"":"s"} made before the tracker existed the AI charge was not recorded (marked * in the table), so their totals cover the scrapers only.`:""}</p>`:""}
+    ${sp.untracked||sp.brain_untracked?`<p class="costnote">${sp.untracked?`${sp.untracked} report${sp.untracked===1?"":"s"} ha${sp.untracked===1?"s":"ve"} no cost data (still running, or their Apify runs are gone). `:""}${sp.brain_untracked?`For ${sp.brain_untracked} report${sp.brain_untracked===1?"":"s"} made before the tracker existed the AI charge was not recorded (marked * in the log), so their totals cover the scrapers only.`:""}</p>`:""}
   </section>`;
 }
 function spendChart(days) {
@@ -590,6 +593,77 @@ function spendChart(days) {
     ${days.map(bar).join("")}
     ${[0, 10, 20, 29].map(lbl).join("")}
   </svg>`;
+}
+/* ---------- costs: the cost tracker page ---------- */
+let costs = { rows: [], total: 0, stats: null, credits: null };
+async function renderCosts() {
+  $("#tabs").hidden = true; $("#status").innerHTML = ""; renderVeil();
+  const m = $("#main");
+  m.innerHTML = `
+  <section class="hist">
+    <div class="sec-h" style="padding-top:28px"><h2 class="hist-h">Cost tracker</h2><span class="sub" id="cost-stats">loading…</span></div>
+    <div class="tbar" style="padding-top:0"><span class="sub">Every research logs what each scraper (Apify) and the AI step (OpenRouter) charged. All amounts in USD.</span><button class="btn" type="button" id="ccsv" title="Download the cost log as a spreadsheet">Export cost log (CSV)</button></div>
+    <div id="credits-box"></div>
+    <div id="cost-body"><div class="empty">Loading…</div></div>
+  </section>`;
+  m.querySelector("#ccsv").addEventListener("click", exportCostCsv);
+  loadCredits(); loadCosts();
+}
+async function loadCredits() {
+  const box = $("#credits-box"); if (!box) return;
+  box.innerHTML = `<section class="costs" style="margin-top:6px"><div class="sec-h"><h3>Account credits</h3><span class="sub">checking Apify and OpenRouter…</span></div></section>`;
+  try { costs.credits = await api("/api/credits"); } catch (e) { costs.credits = { error: e.message }; }
+  if ($("#credits-box")) $("#credits-box").innerHTML = creditsHTML(costs.credits);
+}
+function creditsHTML(c) {
+  if (!c || c.error) return `<section class="costs"><div class="sec-h"><h3>Account credits</h3></div><p class="costnote">Couldn't read the account balances${c?.error ? `: ${esc(c.error)}` : ""}.</p></section>`;
+  const a = c.apify || {}, o = c.openrouter || {};
+  const d = s => s ? new Date(s).toLocaleDateString([], { day: "numeric", month: "short" }) : "";
+  const meter = (used, limit) => used == null || !limit ? "" : `<span class="trk" style="display:block;height:6px;margin-top:8px;background:var(--surface-2);border-radius:3px;overflow:hidden"><span style="display:block;height:100%;width:${Math.min(100, 100 * used / limit).toFixed(1)}%;background:${used / limit > .85 ? "var(--crit)" : "var(--accent)"}"></span></span>`;
+  const apifyK = a.ok
+    ? `<div class="kpi"><span class="l">Apify · this billing cycle</span><span class="v">${fmtUsd(a.used_usd)}${a.limit_usd != null ? `<small>of ${fmtUsd(a.limit_usd)}</small>` : ""}</span><span class="s">${a.left_usd != null ? `<b>${fmtUsd(a.left_usd)}</b> left` : "used"}${a.cycle_start ? ` · ${d(a.cycle_start)} – ${d(a.cycle_end)}` : ""}</span>${meter(a.used_usd, a.limit_usd)}</div>`
+    : `<div class="kpi"><span class="l">Apify</span><span class="v">—</span><span class="s">${esc(a.error || "unavailable")}</span></div>`;
+  const orK = o.ok
+    ? `<div class="kpi"><span class="l">OpenRouter · credits</span><span class="v">${o.left_usd != null ? fmtUsd(o.left_usd) : fmtUsd(o.key_used_usd)}<small>${o.left_usd != null ? "left" : "used by this key"}</small></span><span class="s">${o.bought_usd != null ? `${fmtUsd(o.used_usd)} used of ${fmtUsd(o.bought_usd)} bought` : ""}${o.key_limit_usd != null ? ` · key limit ${fmtUsd(o.key_limit_usd)}` : ""}</span>${meter(o.used_usd, o.bought_usd)}</div>`
+    : `<div class="kpi"><span class="l">OpenRouter</span><span class="v">—</span><span class="s">${esc(o.error || "unavailable")}</span></div>`;
+  return `<section class="costs" style="margin-top:6px"><div class="sec-h"><h3>Account credits</h3><span class="sub">live from the provider accounts, so this includes any use outside Trend Radar · checked ${new Date(c.checked_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span></div>
+    <div class="kpis" style="grid-template-columns:repeat(auto-fit,minmax(240px,1fr))">${apifyK}${orK}</div></section>`;
+}
+async function loadCosts(more = false) {
+  const box = $("#cost-body"); if (!box) return;
+  try {
+    const r = await api(`/api/history?limit=50&offset=${more ? costs.rows.length : 0}${more ? "&stats=0" : ""}`);
+    if (r.enabled === false) { $("#cost-stats").textContent = "database not connected"; box.innerHTML = `<div class="empty"><b>No database yet</b>Connect Supabase and every research's cost will be logged here.</div>`; return; }
+    costs.total = r.total || 0; if (r.stats) costs.stats = r.stats;
+    costs.rows = more ? costs.rows.concat(r.reports) : r.reports;
+    renderCostBody();
+  } catch (e) { box.innerHTML = `<div class="note err">${esc(e.message)}</div>`; }
+}
+function renderCostBody() {
+  const box = $("#cost-body"), sp = costs.stats?.spend; if (!box) return;
+  $("#cost-stats").innerHTML = sp ? `<b>${fmtUsd(sp.total_usd)}</b> spent across <b>${sp.tracked}</b> research${sp.tracked === 1 ? "" : "es"}` : "";
+  const c = (v, cls = "") => `<td class="cost ${cls}">${v == null ? "—" : fmtUsd(v)}</td>`;
+  const rows = costs.rows.map(r => `<tr><td class="num" style="text-align:left">${new Date(r.created_at).toLocaleString([], { dateStyle: "medium", timeStyle: "short" })}</td><td><a href="/r/${esc(r.id)}" data-open="${esc(r.id)}">${esc(r.topic)}</a>${r.status === "running" ? ` <span class="tag">running</span>` : r.status === "failed" ? ` <span class="tag avoid">failed</span>` : ""}</td><td class="num" style="text-align:left">${esc(r.region || "")} · ${r.window_h}h</td><td class="num">${(r.platforms || []).length}</td><td class="num">${r.n_items + (r.n_offtopic || 0)}</td>${c(r.cost_apify_usd)}<td class="cost">${r.cost_brain_usd != null ? fmtUsd(r.cost_brain_usd) : r.cost_usd != null && r.status !== "running" ? `<small title="AI cost not recorded — this research ran before the tracker existed">not recorded*</small>` : "—"}</td><td class="cost" style="font-weight:700;color:var(--ink)">${r.cost_usd == null ? "—" : fmtUsd(r.cost_usd)}</td></tr>`).join("");
+  const shown = costs.rows.reduce((a, r) => a + (Number(r.cost_usd) || 0), 0);
+  box.innerHTML = `${costTrackerHTML(costs.stats)}
+  <div class="sec-h" style="padding-top:8px"><h3>Cost log</h3><span class="sub">every research, newest first · click a keyword for its per-platform breakdown</span></div>
+  ${costs.rows.length ? `<div class="tblwrap"><table class="htab" style="min-width:820px"><thead><tr><th>Date</th><th>Keyword</th><th>Region · window</th><th class="num">Platforms</th><th class="num">Results</th><th class="cost">Scrapers (Apify)</th><th class="cost">AI (OpenRouter)</th><th class="cost">Total</th></tr></thead><tbody>${rows}</tbody>
+  <tfoot><tr><td colspan="7" style="text-align:right;font-weight:700">${costs.rows.length < costs.total ? `Shown (${costs.rows.length} of ${costs.total})` : `All ${costs.total}`}</td><td class="cost" style="font-weight:800;color:var(--ink)">${fmtUsd(shown)}</td></tr></tfoot></table></div>
+  ${costs.rows.length < costs.total ? `<button class="more" id="cmore" style="border:1px solid var(--line);border-radius:10px;margin-top:10px">Show 50 more (${costs.total - costs.rows.length} left)</button>` : ""}` : `<div class="empty"><b>No researches yet</b>Run a research and its cost is logged here automatically.</div>`}`;
+  box.querySelectorAll("[data-open]").forEach(a => a.addEventListener("click", e => { e.preventDefault(); go("/r/" + a.dataset.open + "#sources"); }));
+  box.querySelector("#cmore")?.addEventListener("click", () => loadCosts(true));
+}
+async function exportCostCsv() {
+  try {
+    const r = await api("/api/history?limit=1000&offset=0&stats=0");
+    const cols = ["date", "keyword", "focus", "region", "window_h", "platforms", "status", "results", "scrapers_usd", "ai_usd", "total_usd", "ai_model", "link"];
+    const cell = v => `"${String(v ?? "").replace(/"/g, '""')}"`;
+    const lines = [cols.join(","), ...r.reports.map(x => [x.created_at, x.topic, x.brief, x.region, x.window_h, (x.platforms || []).join(" "), x.status, x.n_items + (x.n_offtopic || 0), x.cost_apify_usd, x.cost_brain_usd, x.cost_usd, x.brain_model, location.origin + "/r/" + x.id].map(cell).join(","))];
+    const total = r.reports.reduce((a, x) => a + (Number(x.cost_usd) || 0), 0);
+    lines.push(["TOTAL", "", "", "", "", "", "", "", r.reports.reduce((a, x) => a + (Number(x.cost_apify_usd) || 0), 0).toFixed(6), r.reports.reduce((a, x) => a + (Number(x.cost_brain_usd) || 0), 0).toFixed(6), total.toFixed(6), "", ""].map(cell).join(","));
+    const blob = new Blob(["﻿" + lines.join("\n")], { type: "text/csv;charset=utf-8" }); const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = `trend-radar-costs-${new Date().toISOString().slice(0, 10)}.csv`; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+    toast(`Exported ${r.reports.length} researches · ${fmtUsd(total)} total`);
+  } catch (e) { toast(e.message, 4000); }
 }
 async function exportHistoryCsv() {
   try {
@@ -762,9 +836,9 @@ const secsSince = iso => iso ? Math.max(0, Math.round((Date.now() - new Date(iso
 function fmtDur(s) { if (s == null) return ""; s = Math.round(s); return s < 60 ? `${s}s` : `${Math.floor(s/60)}m ${String(s%60).padStart(2,"0")}s`; }
 /* ---------- cost tracker ---------- */
 // Every research records what it cost: Apify credits per platform run (what the actor charged for that run) and OpenRouter credits for the AI step, in USD.
-function fmtUsd(n, dash = "—") { if (n == null || isNaN(n)) return dash; n = Number(n); if (n === 0) return "$0.00"; if (n < 0.0005) return "<$0.001"; return "$" + (n < 0.01 ? n.toFixed(3) : n.toFixed(2)); }
+function fmtUsd(n, dash = "—") { if (n == null || isNaN(n)) return dash; n = Number(n); if (n === 0) return "$0.00"; if (n < 0.00005) return "<$0.0001"; return "$" + (n < 0.001 ? n.toFixed(4) : n < 0.01 ? n.toFixed(3) : n.toFixed(2)); }
 const EV_NAMES = { "apify-default-dataset-item": "result", "result-item": "result", "actor-start": "start fee", "init": "start fee" }; // Apify charge-event names → plain words
-function costDetail(c) { const d = c?.detail; if (!d) return "platform usage"; if (d.items != null) return `${d.items} × item @ ${fmtUsd(d.price_usd)}`; const ents = Object.entries(d).filter(([, v]) => v && typeof v === "object" && v.count > 0).sort((a, b) => (b[1].usd || 0) - (a[1].usd || 0)); return ents.length ? ents.map(([k, v]) => `${v.count} × ${EV_NAMES[k] || k.replace(/[-_]+/g, " ")} @ ${fmtUsd(v.price_usd)}`).join(", ") : "platform usage"; }
+function costDetail(c) { const d = c?.detail; if (!d) return "platform usage"; if (d.items != null) return `${d.items} × item @ ${fmtUsd(d.price_usd)}`; const ents = Object.entries(d).filter(([, v]) => v && typeof v === "object" && v.count > 0).sort((a, b) => (b[1].usd || 0) - (a[1].usd || 0)); return ents.length ? ents.map(([k, v]) => `${v.count} × ${EV_NAMES[k] || k.replace(/[-_]+/g, " ")} @ ${fmtUsd(v.price_usd)}`).join(", ") : c.usd ? "platform usage" : "no charge"; }
 function costTitle(c) { if (!c) return ""; const bits = [`Scrapers (Apify): ${fmtUsd(c.apify_usd)}`, c.brain_usd != null ? `AI model (OpenRouter): ${fmtUsd(c.brain_usd)}` : c.brain_pending ? "AI model: pending" : c.brain_tracked === false && job?.brain?.status === "done" ? "AI model: not recorded (older research)" : "AI model: —"]; if (c.sources_untracked) bits.push(`${c.sources_untracked} platform run${c.sources_untracked>1?"s":""} without cost data`); return bits.join(" · "); }
 function costHTML() {
   const c = job.cost; if (!c) return "";
