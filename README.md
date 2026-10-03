@@ -1,6 +1,6 @@
 # Trend Radar
 
-Type any topic — a brand, a theme, a niche — and Trend Radar searches **Google News, Google Trends, Reddit, YouTube, X, TikTok and Instagram** for the last 24 h / 48 h / 7 days, groups what it finds into **signals**, flags **brand safety**, and writes the **content angles** a marketing team can act on today. A second mode scans what's trending across all platforms without a topic.
+Type any topic — a brand, a theme, a niche — and Trend Radar searches **Google News, Google Trends, Reddit, YouTube, X, TikTok, Instagram and GitHub** for the last 24 h / 48 h / 7 days, groups what it finds into **signals**, flags **brand safety**, and writes the **content angles** a marketing team can act on today. A second mode scans what's trending across all platforms without a topic.
 
 Every research run gets a shareable link (`/r/<id>`). Results are stored in your Apify account, so there is no database to set up.
 
@@ -69,10 +69,11 @@ While a research runs, the page shows a translucent loading screen with a radar 
 | X | `apidojo/tweet-scraper` | search, Top, English, since window start |
 | TikTok | `clockworks/tiktok-scraper` | video search, past 24h/week, region proxy |
 | Instagram | `apify/instagram-hashtag-scraper` | keyword search, reels |
+| GitHub | `rupom888/github-repository-scraper` | repo search: created in the last 30 days + pushed within the window, most-starred first; ranked by stars per day |
 
 ### Sources (trending mode)
 
-Google Trending Now, Google News top stories, Reddit r/popular, YouTube mostPopular chart, X trends by location, TikTok Creative Center hashtags (7d, US/GB only), Pinterest top searches, Instagram trending reels.
+Google Trending Now, Google News top stories, Reddit r/popular, YouTube mostPopular chart, X trends by location, TikTok Creative Center hashtags (7d, US/GB only), Pinterest top searches, Instagram trending reels, GitHub repos created this week (most-starred first).
 
 ### Scoring
 
