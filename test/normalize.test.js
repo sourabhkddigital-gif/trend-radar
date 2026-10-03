@@ -11,7 +11,7 @@ const ctx = { region: "US", windowH: 24 };
 test("plan builds one run per platform in both modes and every actor has a field list", () => {
   const topic = plan({ mode: "topic", topic: "AI automation", region: "IN", windowH: 24 });
   const trend = plan({ mode: "trending", region: "US", windowH: 24 });
-  assert.equal(topic.length, 7); assert.equal(trend.length, 8);
+  assert.equal(topic.length, 8); assert.equal(trend.length, 9);
   for (const r of [...topic, ...trend]) assert.ok(FIELDS[r.actor], "fields for " + r.actor);
   assert.equal(topic.find(r => r.platform === "news").input.region_language, "IN:en");
   assert.equal(trend.find(r => r.platform === "x").input.locations[0], "23424977");
@@ -97,4 +97,25 @@ test("the focus brief steers the prompt and the off-topic rule; without it the p
   assert.ok(!plain.includes("FOCUS BRIEF")); assert.ok(plain.includes("Expect well under a third"));
   assert.ok(focused.includes("FOCUS BRIEF")); assert.ok(focused.includes("ignore fashion sneakers")); assert.ok(!focused.includes("Expect well under a third"));
   assert.ok(!buildPrompt({ mode: "trending", topic: "", brief: "x", region: "US", windowH: 24, items }).includes("FOCUS BRIEF"));
+});
+
+test("github: repos ranked by star velocity, forks and duplicates dropped, non-English descriptions filtered", () => {
+  const run = { platform: "github", actor: "rupom888/github-repository-scraper" };
+  const { items } = normalize(run, F["rupom888/github-repository-scraper"], ctx);
+  const names = items.map(i => i.topic.split(" — ")[0]);
+  assert.deepEqual(names, ["feder-cr/dots", "zai-org/ZCode", "kaankiziltug/logo-design-skill", "LockedinLabs-AI/agent-console", "langgenius/dify"]);
+  const dots = items[0];
+  assert.equal(dots.metric, 2543); assert.equal(dots.metric_label, "stars"); assert.equal(dots.url, "https://github.com/feder-cr/dots");
+  assert.ok(dots.stars_per_day > 700); assert.match(dots.extra, /new · \dd old/); assert.equal(dots.age_h, undefined); // repo age never trips the window filter
+  const scored = scoreItems(items, { windowH: 24 });
+  assert.equal(scored[0].category, "Tech & AI"); assert.ok(scored[0].momentum >= 16); assert.equal(scored.find(i => i.topic.startsWith("langgenius")).momentum, 16); // huge but old: rising, not new
+  assert.match(searchUrl("github", "ai agents"), /^https:\/\/github\.com\/search\?q=ai%20agents&type=repositories/);
+});
+
+test("github is planned in both modes with a date-qualified search", () => {
+  const topic = plan({ mode: "topic", topic: "ai agents", windowH: 48, platforms: ["github"] });
+  assert.equal(topic.length, 1); assert.equal(topic[0].actor, "rupom888/github-repository-scraper");
+  assert.match(topic[0].input.queries[0], /^ai agents created:>=\d{4}-\d{2}-\d{2}$/); assert.match(topic[0].input.queries[1], /^ai agents pushed:>=\d{4}-\d{2}-\d{2}$/);
+  const trend = plan({ mode: "trending", windowH: 24, platforms: ["github"] });
+  assert.match(trend[0].input.queries[0], /^created:>=/);
 });
