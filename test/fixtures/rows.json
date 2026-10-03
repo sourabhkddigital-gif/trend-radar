@@ -55,5 +55,15 @@
   "steadyfetch/social-trends-scraper": [
     {"rank":1,"title":"3 screen wallpaper","url":"https://www.pinterest.com/search/pins/?q=3%20screen%20wallpaper","platform":"pinterest","metricValue":52,"details":{"wowChange":{"value":1},"momChange":{"value":100.01}},"status":"ok"},
     {"rank":null,"title":null,"url":null,"platform":null,"metricValue":null,"status":"stopped_at_limit"}
+  ],
+  "rupom888/github-repository-scraper": [
+    {"full_name":"feder-cr/dots","description":"Open-source AI browser agent: stealth Firefox, MCP, Playwright","url":"https://github.com/feder-cr/dots","language":"Python","stars":2543,"forks":210,"created_at":"__NOW-80h__","pushed_at":"__NOW-70h__","topics":["ai-agents","browser-automation","mcp"],"is_fork":false,"is_archived":false},
+    {"full_name":"zai-org/ZCode","description":"Agentic coding assistant for the terminal","url":"https://github.com/zai-org/ZCode","language":"TypeScript","stars":7342,"forks":512,"created_at":"__NOW-310h__","pushed_at":"__NOW-96h__","topics":[],"is_fork":false,"is_archived":false},
+    {"full_name":"kaankiziltug/logo-design-skill","description":"Agent skill for logo and brand design in SVG","url":"https://github.com/kaankiziltug/logo-design-skill","language":"Shell","stars":1560,"forks":88,"created_at":"__NOW-170h__","pushed_at":"__NOW-60h__","topics":["agent-skills","branding"],"is_fork":false,"is_archived":false},
+    {"full_name":"LockedinLabs-AI/agent-console","description":"Local-first observability and token-usage console for AI agents","url":"https://github.com/LockedinLabs-AI/agent-console","language":"TypeScript","stars":793,"forks":41,"created_at":"__NOW-300h__","pushed_at":"__NOW-26h__","topics":["ai-agents","observability"],"is_fork":false,"is_archived":false},
+    {"full_name":"langgenius/dify","description":"Build agentic workflows and RAG pipelines on one collaborative workspace","url":"https://github.com/langgenius/dify","language":"TypeScript","stars":157738,"forks":23000,"created_at":"__NOW-30000h__","pushed_at":"__NOW-1h__","topics":["agents","rag"],"is_fork":false,"is_archived":false},
+    {"full_name":"feder-cr/dots","description":"duplicate row from the second query","url":"https://github.com/feder-cr/dots","language":"Python","stars":2543,"forks":210,"created_at":"__NOW-80h__","pushed_at":"__NOW-70h__","topics":[],"is_fork":false,"is_archived":false},
+    {"full_name":"someone/agents-fork","description":"A fork that should be skipped","url":"https://github.com/someone/agents-fork","language":"Python","stars":12,"forks":0,"created_at":"__NOW-20h__","pushed_at":"__NOW-2h__","topics":[],"is_fork":true,"is_archived":false},
+    {"full_name":"youngyangyang04/llm-master","description":"大模型学习路线 从零开始","url":"https://github.com/youngyangyang04/llm-master","language":null,"stars":1067,"forks":90,"created_at":"__NOW-500h__","pushed_at":"__NOW-340h__","topics":["llm"],"is_fork":false,"is_archived":false}
   ]
 }
