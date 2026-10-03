@@ -338,7 +338,7 @@ footer{padding:36px 0 30px;color:var(--muted);font-size:12.5px;display:flex;flex
 </div></header>
 
 <main class="wrap" id="main"></main>
-<footer class="wrap"><span id="foot-l">Trend Radar · research any topic across seven platforms</span><span>Data via Apify actors · analysis via OpenRouter · logos: Simple Icons (CC0)</span></footer>
+<footer class="wrap"><span id="foot-l">Trend Radar · research any topic across eight platforms</span><span>Data via Apify actors · analysis via OpenRouter · logos: Simple Icons (CC0)</span></footer>
 
 <aside class="drawer" id="drawer" aria-label="Shortlist">
   <div class="dh"><h3>Shortlist</h3><div><button class="btn ghost" id="copy-all">Copy all briefs</button><button class="btn icon" id="drawer-close" aria-label="Close">✕</button></div></div>
@@ -353,9 +353,10 @@ const PLAT = {
   youtube:{name:"YouTube",color:"#FF0000",src:"Videos"}, reddit:{name:"Reddit",color:"#FF4500",src:"Posts"},
   x:{name:"X",color:"var(--ink)",src:"Posts / trends"}, tiktok:{name:"TikTok",color:"var(--ink)",src:"Videos / hashtags"},
   instagram:{name:"Instagram",color:"#E4405F",src:"Reels"}, pinterest:{name:"Pinterest",color:"#BD081C",src:"Top searches"},
+  github:{name:"GitHub",color:"var(--ink)",src:"Repositories"},
 };
-const TOPIC_PLATS = ["news","google","reddit","youtube","x","tiktok","instagram"];
-const TREND_PLATS = ["google","news","reddit","youtube","x","tiktok","pinterest","instagram"];
+const TOPIC_PLATS = ["news","google","reddit","youtube","x","tiktok","instagram","github"];
+const TREND_PLATS = ["google","news","reddit","youtube","x","tiktok","pinterest","instagram","github"];
 const VIEWS = [["radar","Radar"],["platforms","Platforms"],["table","Table"],["sources","Sources"]];
 const CAT_ORDER = ["Sports","Entertainment","Music","Gaming","Tech & AI","Business","Politics & Law","Lifestyle & Seasonal","Fashion & Beauty","Food & Drink","Science & Nature","News & Weather","Health","Culture & Creators","Other"];
 const EXAMPLES = ["AI automation","skincare routine","IPL","electric scooters India","Diwali gifting","protein snacks","Taylor Swift","smart home"];
@@ -367,7 +368,7 @@ const ago = h => h == null ? "" : h < 1 ? "<1h" : h < 48 ? Math.round(h)+"h" : M
 const tag = (t, cls="") => `<span class="tag ${cls}">${esc(t)}</span>`;
 const safetyTag = s => tag(s === "safe" ? "brand-safe" : s === "caution" ? "caution" : "avoid", s);
 // Every result must open somewhere real: a scraped URL when it is a proper link, otherwise the platform's own search for it.
-const SEARCH_URL = { news:"https://news.google.com/search?q=", google:"https://www.google.com/search?q=", youtube:"https://www.youtube.com/results?search_query=", reddit:"https://www.reddit.com/search/?q=", x:"https://x.com/search?q=", tiktok:"https://www.tiktok.com/search?q=", instagram:"https://www.instagram.com/explore/search/keyword/?q=", pinterest:"https://www.pinterest.com/search/pins/?q=" };
+const SEARCH_URL = { news:"https://news.google.com/search?q=", google:"https://www.google.com/search?q=", youtube:"https://www.youtube.com/results?search_query=", reddit:"https://www.reddit.com/search/?q=", x:"https://x.com/search?q=", tiktok:"https://www.tiktok.com/search?q=", instagram:"https://www.instagram.com/explore/search/keyword/?q=", pinterest:"https://www.pinterest.com/search/pins/?q=", github:"https://github.com/search?type=repositories&s=stars&o=desc&q=" };
 const linkOf = i => /^https?:\/\//i.test(i?.url || "") ? i.url : (SEARCH_URL[i?.platform] || SEARCH_URL.google) + encodeURIComponent(i?.topic || "");
 const openTitle = i => `Open on ${PLAT[i?.platform]?.name || "the web"}`;
 const trendsUrl = (topic, region, windowH) => `https://trends.google.com/trends/explore?date=${windowH <= 24 ? "now%201-d" : "now%207-d"}${region && region !== "Global" ? "&geo=" + region : ""}&q=${encodeURIComponent(topic || "")}`;
@@ -430,7 +431,7 @@ async function renderHome() {
   m.innerHTML = `
   <section class="hero">
     <h2>What is the internet saying about <em>this</em>, right now?</h2>
-    <p>Type a topic, a brand, a theme. Trend Radar searches Google News, Google Trends, Reddit, YouTube, X, TikTok and Instagram for the last ${form.windowH}h, groups what it finds into signals, and writes the content angles a marketer can act on today.</p>
+    <p>Type a topic, a brand, a theme. Trend Radar searches Google News, Google Trends, Reddit, YouTube, X, TikTok, Instagram and GitHub for the last ${form.windowH}h, groups what it finds into signals, and writes the content angles a marketer can act on today.</p>
     <form class="sform" id="form" role="search">
       <div class="search">
         <input id="topic" type="search" placeholder="${form.mode==="topic"?"e.g. AI automation, skincare, IPL, Diwali gifting…":"Trending now: no topic needed"}" value="${esc(form.topic)}" ${form.mode==="topic"?"":"disabled"} aria-label="Topic" autocomplete="off">
@@ -829,7 +830,7 @@ function renderSources() {
   <div class="srcs">${job.sources.map(s=>`<div class="srcbox"><div class="h">${logo(s.platform)}${esc(PLAT[s.platform].name)}<span style="margin-left:auto;font:500 12px var(--f-mono);color:${s.status==="done"?"var(--accent-ink)":"var(--crit)"}">${s.status==="done"?s.count+" rows":s.status}</span></div><dl><dt>Query</dt><dd>${esc(s.label)}</dd><dt>Actor</dt><dd><code>${esc(s.actor)}</code></dd>${s.error?`<dt>Error</dt><dd>${esc(s.error)}</dd>`:""}${srcDur(s)!=null?`<dt>Took</dt><dd>${fmtDur(srcDur(s))}</dd>`:s.status==="running"?`<dt>Running</dt><dd><span class="tm" data-since="${esc(s.started_at)}">${fmtDur(secsSince(s.started_at))}</span></dd>`:""}${s.cost?.usd!=null?`<dt>Cost</dt><dd>${fmtUsd(s.cost.usd)} · ${esc(costDetail(s.cost))}</dd>`:""}</dl></div>`).join("")}</div>
   <div class="prose"><h2>How the score works</h2><p>Every result gets 0–100 from <b>reach</b> (rank inside its own platform), <b>momentum</b> (how fresh it is, Google growth %, TikTok trend direction, Pinterest week-over-week) and a small platform weight. A signal adds <b>breadth</b> (+12 per extra platform, +4 for a second region) and a volume bonus for very large numbers, then subtracts 25 for <i>caution</i> and 60 for <i>avoid</i>.</p>
   <h2>The AI layer</h2><p>When all sources are in, the results are sent to a language model (via OpenRouter) that groups them into signals, drops off-topic noise, writes the "why now" with numbers, proposes content angles and flags brand safety. It sees only titles, captions, metrics and ages, never full pages.</p>
-  <h2>Limits</h2><p>Topic mode searches each platform for your words, so a vague topic returns vague results; add a brand or a place to sharpen it. TikTok and Instagram date filters are approximate. X hides volumes for trends. Costs: every run's exact Apify and model charges are recorded — see "What this research cost" above and the cost tracker on the History page.</p></div>`;
+  <h2>Limits</h2><p>Topic mode searches each platform for your words, so a vague topic returns vague results; add a brand or a place to sharpen it. TikTok and Instagram date filters are approximate. GitHub results are repositories: new ones (created in the last 30 days) ranked by stars per day, plus established repos pushed to within the window. X hides volumes for trends. Costs: every run's exact Apify and model charges are recorded — see "What this research cost" above and the cost tracker on the History page.</p></div>`;
 }
 /* ---------- timing ---------- */
 const secsSince = iso => iso ? Math.max(0, Math.round((Date.now() - new Date(iso)) / 1000)) : 0;
