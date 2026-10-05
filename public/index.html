@@ -974,7 +974,7 @@ $("#settings-btn").addEventListener("click", async () => {
       <label>Apify API token<input id="s-apify" type="password" value="${esc(settings.apify||"")}" placeholder="apify_api_…"><span class="help">console.apify.com → Settings → API &amp; Integrations. Research results are saved to your Apify account.</span></label>
       <label>Anthropic API key (Claude)<input id="s-an" type="password" value="${esc(settings.anthropic||"")}" placeholder="sk-ant-…"><span class="help">platform.claude.com → API keys. Runs the analysis on Claude directly; used first when set.</span></label>
       <label>OpenRouter API key<input id="s-or" type="password" value="${esc(settings.openrouter||"")}" placeholder="sk-or-v1-…"><span class="help">openrouter.ai → Keys. Backup for the analysis when no Anthropic key is set or it fails.</span></label>
-      <label>Model<input id="s-model" type="text" value="${esc(settings.model||"")}" placeholder="${esc(health?.model||"anthropic/claude-sonnet-4.5")}"><span class="help">OpenRouter model id (for the OpenRouter backup). Leave empty for the default.</span></label>
+      <label>Model<input id="s-model" type="text" value="${esc(settings.model||"")}" placeholder="${esc(health?.model||"google/gemini-3.8-flash")}"><span class="help">OpenRouter model id (for the OpenRouter backup). Leave empty for the default.</span></label>
     </fieldset>
     <div style="display:flex;gap:8px;justify-content:flex-end"><button class="btn" id="s-cancel">Cancel</button><button class="btn primary" id="s-save">Save</button></div></div>`;
   document.body.appendChild(box);
