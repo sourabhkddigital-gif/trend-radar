@@ -338,7 +338,7 @@ footer{padding:36px 0 30px;color:var(--muted);font-size:12.5px;display:flex;flex
 </div></header>
 
 <main class="wrap" id="main"></main>
-<footer class="wrap"><span id="foot-l">Trend Radar · research any topic across eight platforms</span><span>Data via Apify actors · analysis via OpenRouter · logos: Simple Icons (CC0)</span></footer>
+<footer class="wrap"><span id="foot-l">Trend Radar · research any topic across eight platforms</span><span>Data via Apify actors · analysis by Claude · logos: Simple Icons (CC0)</span></footer>
 
 <aside class="drawer" id="drawer" aria-label="Shortlist">
   <div class="dh"><h3>Shortlist</h3><div><button class="btn ghost" id="copy-all">Copy all briefs</button><button class="btn icon" id="drawer-close" aria-label="Close">✕</button></div></div>
@@ -381,7 +381,7 @@ function saveSettings(){ try { localStorage.setItem(SETTINGS_KEY, JSON.stringify
 // Invite links: https://site/?k=<access code> — the code is saved once and removed from the address bar.
 try { const u = new URL(location.href); const k = u.searchParams.get("k"); if (k) { settings.code = k.trim(); saveSettings(); u.searchParams.delete("k"); history.replaceState(null, "", u.pathname + (u.search || "") + u.hash); } } catch {}
 function inviteLink(){ const u = new URL(location.origin + "/"); if (settings.code) u.searchParams.set("k", settings.code); return u.toString(); }
-function authHeaders(){ const h = {}; if (settings.apify) h["x-apify-token"] = settings.apify; if (settings.openrouter) h["x-openrouter-key"] = settings.openrouter; if (settings.model) h["x-openrouter-model"] = settings.model; if (settings.code) h["x-access-code"] = settings.code; return h; }
+function authHeaders(){ const h = {}; if (settings.apify) h["x-apify-token"] = settings.apify; if (settings.anthropic) h["x-anthropic-key"] = settings.anthropic; if (settings.openrouter) h["x-openrouter-key"] = settings.openrouter; if (settings.model) h["x-openrouter-model"] = settings.model; if (settings.code) h["x-access-code"] = settings.code; return h; }
 async function api(path, opts={}) {
   const res = await fetch(path, { ...opts, headers: { "Content-Type":"application/json", ...authHeaders(), ...(opts.headers||{}) } });
   const json = await res.json().catch(() => ({ error: "Bad response from server" }));
@@ -540,7 +540,7 @@ function renderHistoryBody() {
   const filtered = hist.q || hist.from || hist.to;
   if (!hist.rows.length) { box.innerHTML = `<div class="empty"><b>${filtered?"Nothing matches":"No reports yet"}</b>${filtered?"Try a different keyword or a wider date range.":"Run a research and it will be saved here automatically."}</div>`; return; }
   const dur = s => s == null ? "—" : fmtDur(s);
-  const costCell = r => r.cost_usd == null ? `<td class="cost" title="no cost data for this report">—</td>` : `<td class="cost" title="Scrapers (Apify) ${fmtUsd(r.cost_apify_usd)}${r.cost_brain_usd!=null?` · AI (OpenRouter) ${fmtUsd(r.cost_brain_usd)}`:" · AI cost not recorded"}">${fmtUsd(r.cost_usd)}${r.cost_brain_usd==null&&r.status!=="running"?`<small title="AI cost not recorded for this report">*</small>`:""}</td>`;
+  const costCell = r => r.cost_usd == null ? `<td class="cost" title="no cost data for this report">—</td>` : `<td class="cost" title="Scrapers (Apify) ${fmtUsd(r.cost_apify_usd)}${r.cost_brain_usd!=null?` · AI (Claude) ${fmtUsd(r.cost_brain_usd)}`:" · AI cost not recorded"}">${fmtUsd(r.cost_usd)}${r.cost_brain_usd==null&&r.status!=="running"?`<small title="AI cost not recorded for this report">*</small>`:""}</td>`;
   box.innerHTML = `<div class="tbar"><span class="sub">${filtered?`${hist.total} matching report${hist.total===1?"":"s"} · ${fmtUsd(hist.rows.reduce((a,r)=>a+(Number(r.cost_usd)||0),0))} spent on the ${hist.rows.length} shown`:`all ${hist.total} reports`} · newest first · click a keyword to open the report</span><a href="/costs" data-go="/costs" class="sub" style="color:var(--accent-ink);font-weight:700;text-decoration:none">Cost tracker →</a></div>
   <div class="tblwrap"><table class="htab"><thead><tr><th>Date</th><th>Keyword</th><th>Focus</th><th>Region · window</th><th class="num">Results</th><th class="num">Signals</th><th>Top signal</th><th class="num">Took</th><th class="cost">Cost</th></tr></thead><tbody>
   ${hist.rows.map(r => `<tr><td class="num" style="text-align:left">${new Date(r.created_at).toLocaleString([], {dateStyle:"medium", timeStyle:"short"})}</td><td><a href="/r/${esc(r.id)}" data-open="${esc(r.id)}">${esc(r.topic)}</a>${r.status==="running"?` <span class="tag">running</span>`:r.status==="failed"?` <span class="tag avoid">failed</span>`:""}</td><td class="focus-cell" title="${esc(r.brief||"")}">${esc(r.brief||"")}</td><td class="num" style="text-align:left">${esc(r.region||"")} · ${r.window_h}h</td><td class="num">${r.n_items}${r.n_offtopic?`<small> +${r.n_offtopic} off</small>`:""}</td><td class="num">${r.n_signals}</td><td class="top-cell" title="${esc(r.top_signal||"")}">${esc(r.top_signal||"—")}</td><td class="num">${dur(r.duration_s)}</td>${costCell(r)}</tr>`).join("")}
@@ -562,14 +562,14 @@ function costTrackerHTML(stats = hist.stats) {
   const avg = sp.tracked ? sp.total_usd / sp.tracked : null;
   const plats = Object.entries(sp.by_platform).sort((a,b) => b[1] - a[1]); if (sp.brain_usd) plats.push(["ai", sp.brain_usd]); const pmax = Math.max(0.000001, ...plats.map(p => p[1]));
   const monthName = now.toLocaleDateString([], { month: "long" });
-  if (!sp.tracked) return `<section class="costs"><div class="sec-h"><h3>Cost tracker</h3><span class="sub">Apify + OpenRouter credits per research</span></div><div class="empty"><b>No costs recorded yet</b>From now on every research records what each scraper and the AI step charged; the totals appear here.</div></section>`;
+  if (!sp.tracked) return `<section class="costs"><div class="sec-h"><h3>Cost tracker</h3><span class="sub">Apify + AI credits per research</span></div><div class="empty"><b>No costs recorded yet</b>From now on every research records what each scraper and the AI step charged; the totals appear here.</div></section>`;
   return `<section class="costs">
-    <div class="sec-h"><h3>Spent on research</h3><span class="sub">what the researches cost in Apify credits (scrapers) and OpenRouter credits (AI), in USD · recorded per run</span></div>
+    <div class="sec-h"><h3>Spent on research</h3><span class="sub">what the researches cost in Apify credits (scrapers) and AI credits (Claude), in USD · recorded per run</span></div>
     <div class="kpis">
       <div class="kpi"><span class="l">Total spent</span><span class="v">${fmtUsd(sp.total_usd)}</span><span class="s">${sp.tracked} research${sp.tracked===1?"":"es"} tracked${avg!=null?` · avg ${fmtUsd(avg)} each`:""}</span></div>
       <div class="kpi"><span class="l">${esc(monthName)}</span><span class="v">${fmtUsd(mUsd)}</span><span class="s">${mN} research${mN===1?"":"es"} this month</span></div>
       <div class="kpi flare"><span class="l">Today</span><span class="v">${fmtUsd(tUsd)}</span><span class="s">${tN} research${tN===1?"":"es"} today</span></div>
-      <div class="kpi"><span class="l">Scrapers vs AI</span><span class="v" style="font-size:24px">${fmtUsd(sp.apify_usd)}<small>+ ${fmtUsd(sp.brain_usd)} AI</small></span><span class="s">Apify credits · OpenRouter credits${sp.brain_untracked?` (AI not recorded for ${sp.brain_untracked})`:""}</span></div>
+      <div class="kpi"><span class="l">Scrapers vs AI</span><span class="v" style="font-size:24px">${fmtUsd(sp.apify_usd)}<small>+ ${fmtUsd(sp.brain_usd)} AI</small></span><span class="s">Apify credits · AI credits${sp.brain_untracked?` (AI not recorded for ${sp.brain_untracked})`:""}</span></div>
     </div>
     <div class="costgrid">
       <div class="panel"><h3>Spend per day</h3><p class="hint">last 30 days · hover a bar for the day's total</p>${spendChart(days)}</div>
@@ -603,7 +603,7 @@ async function renderCosts() {
   m.innerHTML = `
   <section class="hist">
     <div class="sec-h" style="padding-top:28px"><h2 class="hist-h">Cost tracker</h2><span class="sub" id="cost-stats">loading…</span></div>
-    <div class="tbar" style="padding-top:0"><span class="sub">Every research logs what each scraper (Apify) and the AI step (OpenRouter) charged. All amounts in USD.</span><button class="btn" type="button" id="ccsv" title="Download the cost log as a spreadsheet">Export cost log (CSV)</button></div>
+    <div class="tbar" style="padding-top:0"><span class="sub">Every research logs what each scraper (Apify) and the AI step (Claude) charged. All amounts in USD.</span><button class="btn" type="button" id="ccsv" title="Download the cost log as a spreadsheet">Export cost log (CSV)</button></div>
     <div id="credits-box"></div>
     <div id="cost-body"><div class="empty">Loading…</div></div>
   </section>`;
@@ -618,17 +618,18 @@ async function loadCredits() {
 }
 function creditsHTML(c) {
   if (!c || c.error) return `<section class="costs"><div class="sec-h"><h3>Account credits</h3></div><p class="costnote">Couldn't read the account balances${c?.error ? `: ${esc(c.error)}` : ""}.</p></section>`;
-  const a = c.apify || {}, o = c.openrouter || {};
+  const a = c.apify || {}, o = c.openrouter || {}, an = c.anthropic || {};
   const d = s => s ? new Date(s).toLocaleDateString([], { day: "numeric", month: "short" }) : "";
   const meter = (used, limit) => used == null || !limit ? "" : `<span class="trk" style="display:block;height:6px;margin-top:8px;background:var(--surface-2);border-radius:3px;overflow:hidden"><span style="display:block;height:100%;width:${Math.min(100, 100 * used / limit).toFixed(1)}%;background:${used / limit > .85 ? "var(--crit)" : "var(--accent)"}"></span></span>`;
   const apifyK = a.ok
     ? `<div class="kpi"><span class="l">Apify · this billing cycle</span><span class="v">${fmtUsd(a.used_usd)}${a.limit_usd != null ? `<small>of ${fmtUsd(a.limit_usd)}</small>` : ""}</span><span class="s">${a.left_usd != null ? `<b>${fmtUsd(a.left_usd)}</b> left` : "used"}${a.cycle_start ? ` · ${d(a.cycle_start)} – ${d(a.cycle_end)}` : ""}</span>${meter(a.used_usd, a.limit_usd)}</div>`
     : `<div class="kpi"><span class="l">Apify</span><span class="v">—</span><span class="s">${esc(a.error || "unavailable")}</span></div>`;
   const orK = o.ok
-    ? `<div class="kpi"><span class="l">OpenRouter · credits</span><span class="v">${o.left_usd != null ? fmtUsd(o.left_usd) : fmtUsd(o.key_used_usd)}<small>${o.left_usd != null ? "left" : "used by this key"}</small></span><span class="s">${o.bought_usd != null ? `${fmtUsd(o.used_usd)} used of ${fmtUsd(o.bought_usd)} bought` : ""}${o.key_limit_usd != null ? ` · key limit ${fmtUsd(o.key_limit_usd)}` : ""}</span>${meter(o.used_usd, o.bought_usd)}</div>`
-    : `<div class="kpi"><span class="l">OpenRouter</span><span class="v">—</span><span class="s">${esc(o.error || "unavailable")}</span></div>`;
+    ? `<div class="kpi"><span class="l">OpenRouter · ${an.connected ? "backup credits" : "credits"}</span><span class="v">${o.left_usd != null ? fmtUsd(o.left_usd) : fmtUsd(o.key_used_usd)}<small>${o.left_usd != null ? "left" : "used by this key"}</small></span><span class="s">${o.bought_usd != null ? `${fmtUsd(o.used_usd)} used of ${fmtUsd(o.bought_usd)} bought` : ""}${o.key_limit_usd != null ? ` · key limit ${fmtUsd(o.key_limit_usd)}` : ""}</span>${meter(o.used_usd, o.bought_usd)}</div>`
+    : `<div class="kpi"><span class="l">OpenRouter${an.connected ? " · backup" : ""}</span><span class="v">—</span><span class="s">${esc(o.error || "unavailable")}</span></div>`;
+  const anK = an.connected ? `<div class="kpi"><span class="l">Claude · Anthropic API</span><span class="v" style="font-size:24px">Connected</span><span class="s">analysis runs on <b>${esc(an.model)}</b> · balance at <a href="${esc(an.billing_url)}" target="_blank" rel="noopener" style="color:var(--accent-ink)">platform.claude.com</a></span></div>` : "";
   return `<section class="costs" style="margin-top:6px"><div class="sec-h"><h3>Account credits</h3><span class="sub">live from the provider accounts, so this includes any use outside Trend Radar · checked ${new Date(c.checked_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span></div>
-    <div class="kpis" style="grid-template-columns:repeat(auto-fit,minmax(240px,1fr))">${apifyK}${orK}</div></section>`;
+    <div class="kpis" style="grid-template-columns:repeat(auto-fit,minmax(240px,1fr))">${apifyK}${anK}${orK}</div></section>`;
 }
 async function loadCosts(more = false) {
   const box = $("#cost-body"); if (!box) return;
@@ -648,7 +649,7 @@ function renderCostBody() {
   const shown = costs.rows.reduce((a, r) => a + (Number(r.cost_usd) || 0), 0);
   box.innerHTML = `${costTrackerHTML(costs.stats)}
   <div class="sec-h" style="padding-top:8px"><h3>Cost log</h3><span class="sub">every research, newest first · click a keyword for its per-platform breakdown</span></div>
-  ${costs.rows.length ? `<div class="tblwrap"><table class="htab" style="min-width:820px"><thead><tr><th>Date</th><th>Keyword</th><th>Region · window</th><th class="num">Platforms</th><th class="num">Results</th><th class="cost">Scrapers (Apify)</th><th class="cost">AI (OpenRouter)</th><th class="cost">Total</th></tr></thead><tbody>${rows}</tbody>
+  ${costs.rows.length ? `<div class="tblwrap"><table class="htab" style="min-width:820px"><thead><tr><th>Date</th><th>Keyword</th><th>Region · window</th><th class="num">Platforms</th><th class="num">Results</th><th class="cost">Scrapers (Apify)</th><th class="cost">AI (Claude)</th><th class="cost">Total</th></tr></thead><tbody>${rows}</tbody>
   <tfoot><tr><td colspan="7" style="text-align:right;font-weight:700">${costs.rows.length < costs.total ? `Shown (${costs.rows.length} of ${costs.total})` : `All ${costs.total}`}</td><td class="cost" style="font-weight:800;color:var(--ink)">${fmtUsd(shown)}</td></tr></tfoot></table></div>
   ${costs.rows.length < costs.total ? `<button class="more" id="cmore" style="border:1px solid var(--line);border-radius:10px;margin-top:10px">Show 50 more (${costs.total - costs.rows.length} left)</button>` : ""}` : `<div class="empty"><b>No researches yet</b>Run a research and its cost is logged here automatically.</div>`}`;
   box.querySelectorAll("[data-open]").forEach(a => a.addEventListener("click", e => { e.preventDefault(); go("/r/" + a.dataset.open + "#sources"); }));
@@ -823,24 +824,24 @@ function renderTable() {
   return filtersHTML({platforms:true}) + `<div class="tbar"><span class="sub">${rows.length} rows · click a header to sort</span><button class="btn" id="csv">Copy as TSV</button></div><div class="tblwrap"><table><thead><tr>${cols.map(([key,l])=>`<th data-k="${key}" ${k===key?`aria-sort="${d>0?"ascending":"descending"}"`:""}>${l}</th>`).join("")}</tr></thead><tbody>${rows.map(i=>`<tr><td class="num">${i.score}</td><td><a class="ext" href="${esc(linkOf(i))}" target="_blank" rel="noopener" title="${esc(openTitle(i))}">${esc(i.topic)}</a>${i.extra?`<div style="font:500 11px var(--f-mono);color:var(--muted)">${esc(i.extra)}</div>`:""}</td><td>${logo(i.platform,"xs")} ${esc(PLAT[i.platform].name)}</td><td>${esc(i.category)}</td><td class="num">${i.metric?fmt(i.metric)+" "+esc(i.metric_label):"rank "+i.rank}</td><td class="num">${i.momentum}</td><td class="num">${ago(i.age_h)}</td><td>${safetyTag(i.safety)}</td></tr>`).join("")}</tbody></table></div>`;
 }
 function renderSources() {
-  return `${job.cost?`<div class="sec-h" style="padding-top:14px"><h2>What this research cost</h2><span class="sub">Apify credits per platform run (what each scraper charged) and OpenRouter credits for the AI step · USD</span></div>${costHTML()}`:""}
+  return `${job.cost?`<div class="sec-h" style="padding-top:14px"><h2>What this research cost</h2><span class="sub">Apify credits per platform run (what each scraper charged) and the AI (Claude) charges for the analysis · USD</span></div>${costHTML()}`:""}
   <div class="sec-h" style="padding-top:${job.cost?"4px":"14px"}"><h2>How long each platform took</h2><span class="sub">extraction time per platform, measured by Apify</span></div>
   ${timingHTML()}
   <div class="sec-h"><h2>Sources &amp; method</h2><span class="sub">what ran for this research</span></div>
   <div class="srcs">${job.sources.map(s=>`<div class="srcbox"><div class="h">${logo(s.platform)}${esc(PLAT[s.platform].name)}<span style="margin-left:auto;font:500 12px var(--f-mono);color:${s.status==="done"?"var(--accent-ink)":"var(--crit)"}">${s.status==="done"?s.count+" rows":s.status}</span></div><dl><dt>Query</dt><dd>${esc(s.label)}</dd><dt>Actor</dt><dd><code>${esc(s.actor)}</code></dd>${s.error?`<dt>Error</dt><dd>${esc(s.error)}</dd>`:""}${srcDur(s)!=null?`<dt>Took</dt><dd>${fmtDur(srcDur(s))}</dd>`:s.status==="running"?`<dt>Running</dt><dd><span class="tm" data-since="${esc(s.started_at)}">${fmtDur(secsSince(s.started_at))}</span></dd>`:""}${s.cost?.usd!=null?`<dt>Cost</dt><dd>${fmtUsd(s.cost.usd)} · ${esc(costDetail(s.cost))}</dd>`:""}</dl></div>`).join("")}</div>
   <div class="prose"><h2>How the score works</h2><p>Every result gets 0–100 from <b>reach</b> (rank inside its own platform), <b>momentum</b> (how fresh it is, Google growth %, TikTok trend direction, Pinterest week-over-week) and a small platform weight. A signal adds <b>breadth</b> (+12 per extra platform, +4 for a second region) and a volume bonus for very large numbers, then subtracts 25 for <i>caution</i> and 60 for <i>avoid</i>.</p>
-  <h2>The AI layer</h2><p>When all sources are in, the results are sent to a language model (via OpenRouter) that groups them into signals, drops off-topic noise, writes the "why now" with numbers, proposes content angles and flags brand safety. It sees only titles, captions, metrics and ages, never full pages.</p>
+  <h2>The AI layer</h2><p>When all sources are in, the results are sent to Claude (directly through Anthropic's API, or via OpenRouter as a backup) that groups them into signals, drops off-topic noise, writes the "why now" with numbers, proposes content angles and flags brand safety. It sees only titles, captions, metrics and ages, never full pages.</p>
   <h2>Limits</h2><p>Topic mode searches each platform for your words, so a vague topic returns vague results; add a brand or a place to sharpen it. TikTok and Instagram date filters are approximate. GitHub results are repositories: new ones (created in the last 30 days) ranked by stars per day, plus established repos pushed to within the window. X hides volumes for trends. Costs: every run's exact Apify and model charges are recorded — see "What this research cost" above and the cost tracker on the History page.</p></div>`;
 }
 /* ---------- timing ---------- */
 const secsSince = iso => iso ? Math.max(0, Math.round((Date.now() - new Date(iso)) / 1000)) : 0;
 function fmtDur(s) { if (s == null) return ""; s = Math.round(s); return s < 60 ? `${s}s` : `${Math.floor(s/60)}m ${String(s%60).padStart(2,"0")}s`; }
 /* ---------- cost tracker ---------- */
-// Every research records what it cost: Apify credits per platform run (what the actor charged for that run) and OpenRouter credits for the AI step, in USD.
+// Every research records what it cost: Apify credits per platform run (what the actor charged for that run) and the AI (Claude) charges for the analysis, in USD.
 function fmtUsd(n, dash = "—") { if (n == null || isNaN(n)) return dash; n = Number(n); if (n === 0) return "$0.00"; if (n < 0.00005) return "<$0.0001"; return "$" + (n < 0.001 ? n.toFixed(4) : n < 0.01 ? n.toFixed(3) : n.toFixed(2)); }
 const EV_NAMES = { "apify-default-dataset-item": "result", "result-item": "result", "actor-start": "start fee", "init": "start fee" }; // Apify charge-event names → plain words
 function costDetail(c) { const d = c?.detail; if (!d) return "platform usage"; if (d.items != null) return `${d.items} × item @ ${fmtUsd(d.price_usd)}`; const ents = Object.entries(d).filter(([, v]) => v && typeof v === "object" && v.count > 0).sort((a, b) => (b[1].usd || 0) - (a[1].usd || 0)); return ents.length ? ents.map(([k, v]) => `${v.count} × ${EV_NAMES[k] || k.replace(/[-_]+/g, " ")} @ ${fmtUsd(v.price_usd)}`).join(", ") : c.usd ? "platform usage" : "no charge"; }
-function costTitle(c) { if (!c) return ""; const bits = [`Scrapers (Apify): ${fmtUsd(c.apify_usd)}`, c.brain_usd != null ? `AI model (OpenRouter): ${fmtUsd(c.brain_usd)}` : c.brain_pending ? "AI model: pending" : c.brain_tracked === false && job?.brain?.status === "done" ? "AI model: not recorded (older research)" : "AI model: —"]; if (c.sources_untracked) bits.push(`${c.sources_untracked} platform run${c.sources_untracked>1?"s":""} without cost data`); return bits.join(" · "); }
+function costTitle(c) { if (!c) return ""; const bits = [`Scrapers (Apify): ${fmtUsd(c.apify_usd)}`, c.brain_usd != null ? `AI model (Claude): ${fmtUsd(c.brain_usd)}` : c.brain_pending ? "AI model: pending" : c.brain_tracked === false && job?.brain?.status === "done" ? "AI model: not recorded (older research)" : "AI model: —"]; if (c.sources_untracked) bits.push(`${c.sources_untracked} platform run${c.sources_untracked>1?"s":""} without cost data`); return bits.join(" · "); }
 function costHTML() {
   const c = job.cost; if (!c) return "";
   const rows = job.sources.map(s => ({ name: PLAT[s.platform]?.name || s.platform, platform: s.platform, usd: s.cost?.usd ?? null, status: s.cost?.usd != null ? s.status : "none",
@@ -966,20 +967,21 @@ $("#settings-btn").addEventListener("click", async () => {
   try { health = await api("/api/health"); } catch {}
   const box = document.createElement("div"); box.className = "modal"; box.innerHTML = `<div class="box" role="dialog" aria-label="Settings">
     <h3>Settings</h3>
-    <div class="help">${health?.server_keys ? `This site has shared keys${health.access_code?" protected by an access code":""}. You can still use your own keys below; they stay in this browser only.` : "This site has no shared keys. Add your own Apify token (required) and OpenRouter key (for the AI analysis)."}</div>
+    <div class="help">${health?.server_keys ? `This site has shared keys${health.access_code?" protected by an access code":""}. You can still use your own keys below; they stay in this browser only.` : "This site has no shared keys. Add your own Apify token (required) and an Anthropic or OpenRouter key (for the AI analysis)."}</div>
     ${health?.access_code?`<label>Access code<input id="s-code" type="password" value="${esc(settings.code||"")}" placeholder="given by the site owner"></label>
     ${settings.code?`<div class="help" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><span>Share the tool without handing out the code:</span><button class="btn" id="s-invite" type="button">Copy invite link</button></div>`:""}`:""}
     <fieldset><legend>Your own keys (optional)</legend>
       <label>Apify API token<input id="s-apify" type="password" value="${esc(settings.apify||"")}" placeholder="apify_api_…"><span class="help">console.apify.com → Settings → API &amp; Integrations. Research results are saved to your Apify account.</span></label>
-      <label>OpenRouter API key<input id="s-or" type="password" value="${esc(settings.openrouter||"")}" placeholder="sk-or-v1-…"><span class="help">openrouter.ai → Keys. Needed for signals, angles and summaries.</span></label>
-      <label>Model<input id="s-model" type="text" value="${esc(settings.model||"")}" placeholder="${esc(health?.model||"anthropic/claude-sonnet-4.5")}"><span class="help">Any OpenRouter model id. Leave empty for the default.</span></label>
+      <label>Anthropic API key (Claude)<input id="s-an" type="password" value="${esc(settings.anthropic||"")}" placeholder="sk-ant-…"><span class="help">platform.claude.com → API keys. Runs the analysis on Claude directly; used first when set.</span></label>
+      <label>OpenRouter API key<input id="s-or" type="password" value="${esc(settings.openrouter||"")}" placeholder="sk-or-v1-…"><span class="help">openrouter.ai → Keys. Backup for the analysis when no Anthropic key is set or it fails.</span></label>
+      <label>Model<input id="s-model" type="text" value="${esc(settings.model||"")}" placeholder="${esc(health?.model||"anthropic/claude-sonnet-4.5")}"><span class="help">OpenRouter model id (for the OpenRouter backup). Leave empty for the default.</span></label>
     </fieldset>
     <div style="display:flex;gap:8px;justify-content:flex-end"><button class="btn" id="s-cancel">Cancel</button><button class="btn primary" id="s-save">Save</button></div></div>`;
   document.body.appendChild(box);
   box.querySelector("#s-cancel").addEventListener("click", () => box.remove());
   box.querySelector("#s-invite")?.addEventListener("click", () => copyText(inviteLink(), "Invite link copied — anyone who opens it can run research"));
   box.addEventListener("click", e => { if (e.target === box) box.remove(); });
-  box.querySelector("#s-save").addEventListener("click", () => { settings = { code: box.querySelector("#s-code")?.value.trim()||"", apify: box.querySelector("#s-apify").value.trim(), openrouter: box.querySelector("#s-or").value.trim(), model: box.querySelector("#s-model").value.trim() }; saveSettings(); box.remove(); toast("Settings saved"); if (!job) renderHome(); });
+  box.querySelector("#s-save").addEventListener("click", () => { settings = { code: box.querySelector("#s-code")?.value.trim()||"", apify: box.querySelector("#s-apify").value.trim(), anthropic: box.querySelector("#s-an").value.trim(), openrouter: box.querySelector("#s-or").value.trim(), model: box.querySelector("#s-model").value.trim() }; saveSettings(); box.remove(); toast("Settings saved"); if (!job) renderHome(); });
 });
 
 /* ---------- utils ---------- */
