@@ -20,7 +20,9 @@ Every research run gets a shareable link (`/r/<id>`). Results are stored in your
    | Variable | Required | What it does |
    |---|---|---|
    | `APIFY_TOKEN` | yes* | Runs the scrapers and stores results |
-   | `OPENROUTER_API_KEY` | recommended | Signals, angles, summaries. Without it you get raw results only |
+   | `ANTHROPIC_API_KEY` | recommended | Runs the AI analysis (signals, angles, summaries) on Claude directly through Anthropic's API — used first when set, with Haiku as a retry. Key from platform.claude.com → API keys |
+   | `ANTHROPIC_MODEL` | no | Default `claude-sonnet-5-5` |
+   | `OPENROUTER_API_KEY` | no | Backup for the analysis when no Anthropic key is set or it fails (e.g. out of credits). With neither key you get raw results only |
    | `OPENROUTER_MODEL` | no | Default `anthropic/claude-sonnet-4.5`. Any OpenRouter model id |
    | `ACCESS_CODE` | no | Leave unset for an **open site** — anyone with the URL can search, and the two limits below cap what it can cost you. If set, starting a research needs the code (viewing is always open); share `https://your-site/?k=<code>` as an invite link that saves it silently |
    | `DAILY_LIMIT` | no | Max researches per rolling 24 h on the shared keys, all visitors combined (default 0 = unlimited) |
